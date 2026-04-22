@@ -1,0 +1,240 @@
+warehouse-management/
+├── README.md
+├── .gitignore
+├── docker-compose.yml
+├── docs/
+│   ├── report/
+│   │   ├── bao-cao-thuc-tap-co-so.docx
+│   │   └── images/
+│   ├── api/
+│   │   └── openapi.yaml
+│   ├── database/
+│   │   ├── erd.png
+│   │   └── schema.sql
+│   └── usecase/
+│       └── usecase-specs.md
+│
+├── backend/
+│   ├── requirements.txt
+│   ├── run.py
+│   ├── .env
+│   ├── .env.example
+│   ├── migrations/
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── config.py
+│   │   ├── extensions.py
+│   │   ├── models/
+│   │   │   ├── __init__.py
+│   │   │   ├── user.py
+│   │   │   ├── product.py
+│   │   │   ├── supplier.py
+│   │   │   ├── import_receipt.py
+│   │   │   ├── import_detail.py
+│   │   │   ├── export_receipt.py
+│   │   │   ├── export_detail.py
+│   │   │   └── stock_view.py
+│   │   ├── schemas/
+│   │   │   ├── __init__.py
+│   │   │   ├── auth_schema.py
+│   │   │   ├── product_schema.py
+│   │   │   ├── supplier_schema.py
+│   │   │   ├── user_schema.py
+│   │   │   ├── import_schema.py
+│   │   │   ├── export_schema.py
+│   │   │   └── alert_schema.py
+│   │   ├── api/
+│   │   │   ├── __init__.py
+│   │   │   ├── auth/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py
+│   │   │   │   ├── service.py
+│   │   │   │   └── validators.py
+│   │   │   ├── users/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py
+│   │   │   │   ├── service.py
+│   │   │   │   └── permissions.py
+│   │   │   ├── products/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py
+│   │   │   │   ├── service.py
+│   │   │   │   └── validators.py
+│   │   │   ├── suppliers/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py
+│   │   │   │   └── service.py
+│   │   │   ├── imports/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py
+│   │   │   │   ├── service.py
+│   │   │   │   └── queries.py
+│   │   │   ├── exports/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py
+│   │   │   │   ├── service.py
+│   │   │   │   └── queries.py
+│   │   │   ├── inventory/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py
+│   │   │   │   └── service.py
+│   │   │   ├── alerts/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py
+│   │   │   │   ├── service.py
+│   │   │   │   └── queries.py
+│   │   │   └── reports/
+│   │   │       ├── __init__.py
+│   │   │       ├── routes.py
+│   │   │       └── service.py
+│   │   ├── core/
+│   │   │   ├── security.py
+│   │   │   ├── auth.py
+│   │   │   ├── permissions.py
+│   │   │   ├── constants.py
+│   │   │   └── exceptions.py
+│   │   ├── common/
+│   │   │   ├── response.py
+│   │   │   ├── pagination.py
+│   │   │   ├── filters.py
+│   │   │   ├── utils.py
+│   │   │   └── enums.py
+│   │   ├── db/
+│   │   │   ├── init.sql
+│   │   │   ├── views.sql
+│   │   │   ├── indexes.sql
+│   │   │   └── seed.sql
+│   │   └── tests/
+│   │       ├── __init__.py
+│   │       ├── conftest.py
+│   │       ├── test_auth.py
+│   │       ├── test_products.py
+│   │       ├── test_suppliers.py
+│   │       ├── test_imports.py
+│   │       ├── test_exports.py
+│   │       ├── test_inventory.py
+│   │       └── test_alerts.py
+│   └── instance/
+│       └── uploads/
+│
+├── frontend/
+│   ├── package.json
+│   ├── vite.config.js
+│   ├── .env
+│   ├── .env.example
+│   ├── public/
+│   │   ├── favicon.svg
+│   │   └── logo.svg
+│   └── src/
+│       ├── main.jsx
+│       ├── App.jsx
+│       ├── router/
+│       │   └── index.jsx
+│       ├── layouts/
+│       │   ├── AuthLayout.jsx
+│       │   ├── DashboardLayout.jsx
+│       │   └── MainLayout.jsx
+│       ├── pages/
+│       │   ├── auth/
+│       │   │   └── LoginPage.jsx
+│       │   ├── dashboard/
+│       │   │   └── DashboardPage.jsx
+│       │   ├── products/
+│       │   │   ├── ProductListPage.jsx
+│       │   │   ├── ProductCreatePage.jsx
+│       │   │   └── ProductEditPage.jsx
+│       │   ├── suppliers/
+│       │   │   ├── SupplierListPage.jsx
+│       │   │   ├── SupplierCreatePage.jsx
+│       │   │   └── SupplierEditPage.jsx
+│       │   ├── users/
+│       │   │   ├── UserListPage.jsx
+│       │   │   ├── UserCreatePage.jsx
+│       │   │   └── UserEditPage.jsx
+│       │   ├── imports/
+│       │   │   ├── ImportListPage.jsx
+│       │   │   ├── ImportCreatePage.jsx
+│       │   │   └── ImportDetailPage.jsx
+│       │   ├── exports/
+│       │   │   ├── ExportListPage.jsx
+│       │   │   ├── ExportCreatePage.jsx
+│       │   │   └── ExportDetailPage.jsx
+│       │   ├── inventory/
+│       │   │   └── InventoryPage.jsx
+│       │   ├── alerts/
+│       │   │   ├── LowStockPage.jsx
+│       │   │   ├── ExpiryAlertPage.jsx
+│       │   │   └── SlowMovingPage.jsx
+│       │   ├── suppliers-history/
+│       │   │   └── SupplierHistoryPage.jsx
+│       │   └── errors/
+│       │       ├── NotFoundPage.jsx
+│       │       └── ForbiddenPage.jsx
+│       ├── components/
+│       │   ├── common/
+│       │   │   ├── Button.jsx
+│       │   │   ├── Input.jsx
+│       │   │   ├── Modal.jsx
+│       │   │   ├── Table.jsx
+│       │   │   ├── Pagination.jsx
+│       │   │   ├── ConfirmDialog.jsx
+│       │   │   ├── Loading.jsx
+│       │   │   └── EmptyState.jsx
+│       │   ├── layout/
+│       │   │   ├── Sidebar.jsx
+│       │   │   ├── Header.jsx
+│       │   │   ├── Breadcrumb.jsx
+│       │   │   └── PageContainer.jsx
+│       │   ├── dashboard/
+│       │   │   ├── KpiCard.jsx
+│       │   │   ├── AlertSummary.jsx
+│       │   │   └── RecentTransactions.jsx
+│       │   ├── forms/
+│       │   │   ├── ProductForm.jsx
+│       │   │   ├── SupplierForm.jsx
+│       │   │   ├── UserForm.jsx
+│       │   │   ├── ImportReceiptForm.jsx
+│       │   │   ├── ExportReceiptForm.jsx
+│       │   │   └── ReceiptItemsTable.jsx
+│       │   └── alerts/
+│       │       ├── LowStockTable.jsx
+│       │       ├── ExpiryTable.jsx
+│       │       └── SlowMovingTable.jsx
+│       ├── services/
+│       │   ├── axiosClient.js
+│       │   ├── authService.js
+│       │   ├── productService.js
+│       │   ├── supplierService.js
+│       │   ├── userService.js
+│       │   ├── importService.js
+│       │   ├── exportService.js
+│       │   ├── inventoryService.js
+│       │   └── alertService.js
+│       ├── hooks/
+│       │   ├── useAuth.js
+│       │   ├── useDebounce.js
+│       │   ├── usePagination.js
+│       │   └── usePermission.js
+│       ├── contexts/
+│       │   └── AuthContext.jsx
+│       ├── store/
+│       │   ├── authStore.js
+│       │   └── uiStore.js
+│       ├── utils/
+│       │   ├── formatDate.js
+│       │   ├── formatCurrency.js
+│       │   ├── formatNumber.js
+│       │   ├── validators.js
+│       │   └── constants.js
+│       ├── styles/
+│       │   ├── index.css
+│       │   ├── variables.css
+│       │   └── components.css
+│       └── assets/
+│           ├── images/
+│           └── icons/
+│
+└── scripts/
+    ├── setup.sh
+    ├── dev.sh
+    └── reset_db.sh
