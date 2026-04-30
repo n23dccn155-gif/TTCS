@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import inventoryService from '../../services/inventoryService'
 import PageHeader from '../../components/common/PageHeader'
 import DataTable from '../../components/common/DataTable'
+import EmptyState from '../../components/common/EmptyState'
 
 const InventoryPage = () => {
   const [inventory, setInventory] = useState([])
@@ -24,13 +25,21 @@ const InventoryPage = () => {
     { key: 'currentStock', title: 'Tồn hiện tại' },
   ]
 
+  const emptyState = (
+    <EmptyState
+      icon="inventory"
+      message="Chưa có dữ liệu tồn kho"
+      description="Dữ liệu tồn kho sẽ hiển thị sau khi có phiếu nhập/xuất."
+    />
+  )
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Tồn kho hiện tại"
         description="Hiển thị số lượng tồn của từng sản phẩm"
       />
-      <DataTable columns={columns} data={inventory} />
+      <DataTable columns={columns} data={inventory} empty={emptyState} />
     </div>
   )
 }

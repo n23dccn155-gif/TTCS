@@ -12,9 +12,7 @@ import ImportCreatePage from '../pages/imports/ImportCreatePage'
 import ExportListPage from '../pages/exports/ExportListPage'
 import ExportCreatePage from '../pages/exports/ExportCreatePage'
 import InventoryPage from '../pages/inventory/InventoryPage'
-import LowStockPage from '../pages/alert/LowStockPage'
-import ExpiryAlertPage from '../pages/alert/ExpiryAlertPage'
-import SlowMovingPage from '../pages/alert/SlowMovingPage'
+import AlertsPage from '../pages/alert/AlertsPage'
 import NotFoundPage from '../pages/errors/NotFoundPage'
 import ForbiddenPage from '../pages/errors/ForbiddenPage'
 
@@ -38,9 +36,7 @@ export const router = createBrowserRouter([
       { path: 'exports', element: <ExportListPage /> },
       { path: 'exports/create', element: <ExportCreatePage /> },
       { path: 'inventory', element: <InventoryPage /> },
-      { path: 'alerts/low-stock', element: <LowStockPage /> },
-      { path: 'alerts/expiry', element: <ExpiryAlertPage /> },
-      { path: 'alerts/slow-moving', element: <SlowMovingPage /> },
+      { path: 'alerts', element: <AlertsPage /> },
       { path: '403', element: <ForbiddenPage /> },
     ],
   },

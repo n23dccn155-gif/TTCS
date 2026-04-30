@@ -1,9 +1,9 @@
 import React from 'react'
 import EmptyState from './EmptyState'
 
-const DataTable = ({ columns = [], data = [] }) => {
+const DataTable = ({ columns = [], data = [], empty }) => {
   if (!data.length) {
-    return <EmptyState message="Chưa có dữ liệu để hiển thị" />
+    return empty || <EmptyState message="Chưa có dữ liệu để hiển thị" />
   }
 
   return (

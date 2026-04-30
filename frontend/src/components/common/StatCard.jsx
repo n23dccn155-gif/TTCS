@@ -8,7 +8,7 @@ const StatCard = ({ title, value, color = 'bg-cyan-500' }) => {
           <p className="text-sm text-slate-500">{title}</p>
           <h3 className="mt-2 text-3xl font-bold text-slate-800">{value}</h3>
         </div>
-        <div className={`h-12 w-12 rounded-xl ${color}`}></div>
+        <div className={`h-10 w-10 rounded-md ${color}`}></div>
       </div>
     </div>
   )
