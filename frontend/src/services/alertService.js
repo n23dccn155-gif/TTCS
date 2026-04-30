@@ -1,16 +1,9 @@
-const mockLowStock = [ 
-]
-
-const mockExpiry = [ 
-]
-
-const mockSlowMoving = [ 
-]
+import axiosClient from './axiosClient'
 
 const alertService = {
-  getLowStock: async () => ({ data: mockLowStock }),
-  getExpiry: async () => ({ data: mockExpiry }),
-  getSlowMoving: async () => ({ data: mockSlowMoving }),
+  getLowStock: async () => axiosClient.get('/alerts/low-stock'),
+  getExpiry: async () => axiosClient.get('/alerts/expiry'),
+  getSlowMoving: async () => axiosClient.get('/alerts/slow-moving'),
 }
 
 export default alertService

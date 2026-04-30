@@ -1,10 +1,11 @@
-const mockUsers = [
-  { id: 1, username: 'admin', full_name: 'Chủ đại lý', role: 'admin', status: 'active' },
-  { id: 2, username: 'staff01', full_name: 'Nhân viên kho 1', role: 'staff', status: 'active' },
-]
+import axiosClient from './axiosClient'
 
 const userService = {
-  getAll: async () => ({ data: mockUsers }),
+  getAll: async () => axiosClient.get('/users'),
+  getById: async (id) => axiosClient.get(`/users/${id}`),
+  create: async (payload) => axiosClient.post('/users', payload),
+  update: async (id, payload) => axiosClient.put(`/users/${id}`, payload),
+  delete: async (id) => axiosClient.delete(`/users/${id}`),
 }
 
 export default userService

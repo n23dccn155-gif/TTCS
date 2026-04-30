@@ -27,10 +27,10 @@ const DashboardPage = () => {
   return (
     <div className="space-y-6">
       <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Tổng sản phẩm" value="0" color="bg-blue-500" />
-        <StatCard title="Phiếu nhập tháng này" value="0" color="bg-emerald-500" />
-        <StatCard title="Phiếu xuất tháng này" value="0" color="bg-orange-500" />
-        <StatCard title="Cảnh báo tồn thấp" value="0" color="bg-red-500" />
+        <StatCard title="Tổng sản phẩm" value="0" color="bg-blue-400" />
+        <StatCard title="Phiếu nhập tháng này" value="0" color="bg-emerald-400" />
+        <StatCard title="Phiếu xuất tháng này" value="0" color="bg-orange-400" />
+        <StatCard title="Cảnh báo tồn thấp" value="0" color="bg-red-400" />
       </section>
 
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
