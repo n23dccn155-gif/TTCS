@@ -3,6 +3,8 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 import AuthLayout from '../layouts/AuthLayout'
 import DashboardLayout from '../layouts/DashboardLayout'
 import LoginPage from '../pages/auth/LoginPage'
+import RegisterPage from '../pages/auth/RegisterPage'
+import ProfilePage from '../pages/auth/ProfilePage'
 import DashboardPage from '../pages/dashboard/DashboardPage'
 import ProductListPage from '../pages/products/ProductListPage'
 import SupplierListPage from '../pages/suppliers/SupplierListPage'
@@ -18,9 +20,16 @@ import ForbiddenPage from '../pages/errors/ForbiddenPage'
 
 export const router = createBrowserRouter([
   {
-    path: '/login',
+    path: '/auth',
     element: <AuthLayout />,
-    children: [{ index: true, element: <LoginPage /> }],
+    children: [
+      { path: 'login', element: <LoginPage /> },
+      { path: 'register', element: <RegisterPage /> },
+    ],
+  },
+  {
+    path: '/login',
+    element: <Navigate to="/auth/login" replace />,
   },
   {
     path: '/',
@@ -28,6 +37,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="/dashboard" replace /> },
       { path: 'dashboard', element: <DashboardPage /> },
+      { path: 'profile', element: <ProfilePage /> },
       { path: 'products', element: <ProductListPage /> },
       { path: 'suppliers', element: <SupplierListPage /> },
       { path: 'users', element: <UserListPage /> },
