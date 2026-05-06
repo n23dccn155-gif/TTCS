@@ -10,6 +10,7 @@ class ImportDetail(db.Model):
     quantity = db.Column(db.Integer, nullable=False)
     price = db.Column(db.Float, default=0)
     expiry_date = db.Column(db.Date)
+    batch_code = db.Column(db.String(50)) # Added batch_code as per report
 
     def to_dict(self):
         return {
@@ -20,4 +21,5 @@ class ImportDetail(db.Model):
             'quantity': self.quantity,
             'price': self.price,
             'expiry_date': self.expiry_date.isoformat() if self.expiry_date else None,
+            'batch_code': self.batch_code,
         }

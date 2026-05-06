@@ -9,7 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('token')
+    const storedToken = localStorage.getItem('access_token')
     const storedUser = localStorage.getItem('user')
     if (storedToken && storedUser) {
       setToken(storedToken)
@@ -21,10 +21,13 @@ export const AuthProvider = ({ children }) => {
   const login = async ({ username, password }) => {
     try {
       const res = await authService.login({ username, password })
-      const { token: newToken, user: newUser } = res.data
-      localStorage.setItem('token', newToken)
+      const { access_token, refresh_token, user: newUser } = res.data
+      
+      localStorage.setItem('access_token', access_token)
+      localStorage.setItem('refresh_token', refresh_token)
       localStorage.setItem('user', JSON.stringify(newUser))
-      setToken(newToken)
+      
+      setToken(access_token)
       setUser(newUser)
       return { success: true }
     } catch (error) {
@@ -33,8 +36,19 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  const register = async (payload) => {
+    try {
+      await authService.register(payload)
+      return { success: true }
+    } catch (error) {
+      const message = error.response?.data?.message || 'Đăng ký thất bại'
+      return { success: false, message }
+    }
+  }
+
   const logout = () => {
-    localStorage.removeItem('token')
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
     localStorage.removeItem('user')
     setUser(null)
     setToken(null)
@@ -46,6 +60,7 @@ export const AuthProvider = ({ children }) => {
       token,
       isAuthenticated: !!token,
       login,
+      register,
       logout,
       loading,
     }),
@@ -55,7 +70,10 @@ export const AuthProvider = ({ children }) => {
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-100 text-slate-600">
-        Đang tải...
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent"></div>
+          <p className="font-medium">Đang tải...</p>
+        </div>
       </div>
     )
   }

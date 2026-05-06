@@ -2,23 +2,27 @@ from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash
 from app.extensions import db
 from app.model.user import User
+from app.utils.decorators import admin_required
 
 bp = Blueprint('users', __name__)
 
 
 @bp.route('', methods=['GET'])
+@admin_required()
 def get_all():
     users = User.query.all()
     return jsonify([u.to_dict() for u in users]), 200
 
 
 @bp.route('/<int:id>', methods=['GET'])
+@admin_required()
 def get_by_id(id):
     user = User.query.get_or_404(id)
     return jsonify(user.to_dict()), 200
 
 
 @bp.route('', methods=['POST'])
+@admin_required()
 def create():
     data = request.get_json()
     user = User(
@@ -34,6 +38,7 @@ def create():
 
 
 @bp.route('/<int:id>', methods=['PUT'])
+@admin_required()
 def update(id):
     user = User.query.get_or_404(id)
     data = request.get_json()
@@ -48,8 +53,9 @@ def update(id):
 
 
 @bp.route('/<int:id>', methods=['DELETE'])
+@admin_required()
 def delete(id):
     user = User.query.get_or_404(id)
     db.session.delete(user)
     db.session.commit()
-    return jsonify({'message': 'Xóa ngường dùng thành công'}), 200
+    return jsonify({'message': 'Xóa người dùng thành công'}), 200

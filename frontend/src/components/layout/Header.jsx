@@ -43,13 +43,17 @@ const Header = ({ onToggleSidebar }) => {
       setConfirmLogout(true)
       return
     }
-    // TODO: handle profile, password, settings navigation
+    if (action === 'profile' || action === 'password') {
+      navigate('/profile')
+      return
+    }
+    // TODO: handle settings navigation
   }
 
   const handleConfirmLogout = () => {
     setConfirmLogout(false)
     logout()
-    navigate('/login')
+    navigate('/auth/login')
   }
 
   const toggleFullscreen = () => {
