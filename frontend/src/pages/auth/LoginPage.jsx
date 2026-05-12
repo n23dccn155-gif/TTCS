@@ -149,12 +149,6 @@ const LoginPage = () => {
             </div>
           </div>
           
-          <div className="mt-6 text-center text-sm text-slate-600">
-            Chưa có tài khoản?{' '}
-            <Link to="/auth/register" className="font-semibold text-cyan-600 hover:underline">
-              Đăng ký tại đây
-            </Link>
-          </div>
         </div>
       </div>
     </div>

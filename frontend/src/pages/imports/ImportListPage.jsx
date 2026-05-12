@@ -16,11 +16,11 @@ const ImportListPage = () => {
   }, [])
 
   const columns = [
-    { key: 'code', title: 'Mã phiếu nhập' },
-    { key: 'supplier', title: 'Nhà cung cấp' },
-    { key: 'date', title: 'Ngày nhập' },
-    { key: 'totalItems', title: 'Số dòng SP' },
-    { key: 'status', title: 'Trạng thái' },
+    { key: 'receipt_code', title: 'Mã phiếu nhập' },
+    { key: 'supplier_name', title: 'Nhà cung cấp' },
+    { key: 'import_date', title: 'Ngày nhập' },
+    { key: 'note', title: 'Ghi chú' },
+    { key: 'creator_name', title: 'Người tạo' },
   ]
 
   return (
