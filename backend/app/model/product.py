@@ -6,11 +6,14 @@ class Product(db.Model):
     __tablename__ = 'products'
 
     id = db.Column(db.Integer, primary_key=True)
-    code = db.Column(db.String(50), unique=True, nullable=False)
+    product_code = db.Column(db.String(50), unique=True, nullable=False, index=True)
     name = db.Column(db.String(200), nullable=False)
+    unit = db.Column(db.String(30))
     category = db.Column(db.String(100))
-    unit = db.Column(db.String(50))
-    min_stock = db.Column(db.Integer, default=0)
+    description = db.Column(db.Text)
+    min_stock = db.Column(db.Integer, nullable=False, default=0)
+    unit_price = db.Column(db.Numeric(15, 2))
+    is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     import_details = db.relationship('ImportDetail', backref='product', lazy=True)
@@ -19,16 +22,13 @@ class Product(db.Model):
     def to_dict(self):
         return {
             'id': self.id,
-            'code': self.code,
+            'product_code': self.product_code,
             'name': self.name,
-            'category': self.category,
             'unit': self.unit,
+            'category': self.category,
+            'description': self.description,
             'min_stock': self.min_stock,
-            'stock': self.current_stock(),
+            'unit_price': float(self.unit_price) if self.unit_price else None,
+            'is_active': self.is_active,
             'created_at': self.created_at.isoformat() if self.created_at else None,
         }
-
-    def current_stock(self):
-        total_import = sum(d.quantity for d in self.import_details)
-        total_export = sum(d.quantity for d in self.export_details)
-        return total_import - total_export

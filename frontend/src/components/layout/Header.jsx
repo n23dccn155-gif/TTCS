@@ -12,13 +12,7 @@ import {
   LogOut,
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
-
-const menuItems = [
-  { label: 'Hồ sơ user', action: 'profile', icon: User },
-  { label: 'Thay đổi mật khẩu', action: 'password', icon: Lock },
-  { label: 'Cài đặt', action: 'settings', icon: Settings },
-  { label: 'Đăng xuất', action: 'logout', icon: LogOut },
-]
+import NotificationBell from './NotificationBell'
 
 const Header = ({ onToggleSidebar }) => {
   const navigate = useNavigate()
@@ -37,17 +31,27 @@ const Header = ({ onToggleSidebar }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // Create dynamic dropdown items based on role
+  const dropdownItems = [
+    { label: 'Hồ sơ cá nhân', action: 'profile', icon: User },
+    ...(user?.role === 'admin' ? [{ label: 'Cài đặt hệ thống', action: 'settings', icon: Settings }] : []),
+    { label: 'Đăng xuất', action: 'logout', icon: LogOut },
+  ]
+
   const handleMenuClick = (action) => {
     setOpen(false)
     if (action === 'logout') {
       setConfirmLogout(true)
       return
     }
-    if (action === 'profile' || action === 'password') {
+    if (action === 'profile') {
       navigate('/profile')
       return
     }
-    // TODO: handle settings navigation
+    if (action === 'settings') {
+      alert('Chức năng cài đặt hệ thống đang được phát triển!')
+      return
+    }
   }
 
   const handleConfirmLogout = () => {
@@ -100,15 +104,7 @@ const Header = ({ onToggleSidebar }) => {
               <Maximize className="h-5 w-5" strokeWidth={2} />
             </button>
 
-            <button
-              className="relative rounded-lg p-2 text-white/70 transition hover:bg-white/10 hover:text-white"
-              title="Thông báo"
-            >
-              <Bell className="h-5 w-5" strokeWidth={2} />
-              <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold">
-                3
-              </span>
-            </button>
+            <NotificationBell />
 
             <div ref={dropdownRef} className="relative ml-2">
               <button
@@ -129,7 +125,7 @@ const Header = ({ onToggleSidebar }) => {
 
               {open && (
                 <div className="absolute right-0 mt-2 w-56 rounded-xl border border-gray-100 bg-white py-2 shadow-xl">
-                  {menuItems.map((item) => {
+                  {dropdownItems.map((item) => {
                     const Icon = item.icon
                     return (
                       <button

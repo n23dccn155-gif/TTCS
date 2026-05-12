@@ -36,16 +36,6 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  const register = async (payload) => {
-    try {
-      await authService.register(payload)
-      return { success: true }
-    } catch (error) {
-      const message = error.response?.data?.message || 'Đăng ký thất bại'
-      return { success: false, message }
-    }
-  }
-
   const logout = () => {
     localStorage.removeItem('access_token')
     localStorage.removeItem('refresh_token')
@@ -54,14 +44,19 @@ export const AuthProvider = ({ children }) => {
     setToken(null)
   }
 
+  const updateUser = (updatedUser) => {
+    localStorage.setItem('user', JSON.stringify(updatedUser))
+    setUser(updatedUser)
+  }
+
   const value = useMemo(
     () => ({
       user,
       token,
       isAuthenticated: !!token,
       login,
-      register,
       logout,
+      updateUser,
       loading,
     }),
     [user, token, loading]

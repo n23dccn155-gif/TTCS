@@ -4,9 +4,6 @@ const authService = {
   login: async (payload) => {
     return axiosClient.post('/auth/login', payload)
   },
-  register: async (payload) => {
-    return axiosClient.post('/auth/register', payload)
-  },
   refresh: async (refreshToken) => {
     return axiosClient.post('/auth/refresh', {}, {
       headers: {
@@ -16,6 +13,9 @@ const authService = {
   },
   changePassword: async (payload) => {
     return axiosClient.post('/auth/change-password', payload)
+  },
+  updateProfile: async (payload) => {
+    return axiosClient.put('/auth/update-profile', payload)
   },
   getMe: async () => {
     return axiosClient.get('/auth/me')

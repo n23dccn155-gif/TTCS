@@ -1,57 +1,132 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
+import axiosClient from '../../services/axiosClient'
 import StatCard from '../../components/common/StatCard'
 import DataTable from '../../components/common/DataTable'
 
-const recentTransactions = [
-  // { id: 1, code: 'PN001', type: 'Nhập kho', date: '20/04/2026', status: 'Hoàn thành' },
-  // { id: 2, code: 'PX001', type: 'Xuất kho', date: '20/04/2026', status: 'Hoàn thành' },
-  // { id: 3, code: 'PN002', type: 'Nhập kho', date: '19/04/2026', status: 'Hoàn thành' },
-]
-
 const DashboardPage = () => {
-  const columns = [
-    { key: 'code', title: 'Mã phiếu' },
-    { key: 'type', title: 'Loại' },
-    { key: 'date', title: 'Ngày' },
-    {
-      key: 'status',
-      title: 'Trạng thái',
-      render: (row) => (
-        <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
-          {row.status}
-        </span>
-      ),
-    },
+  const [overview, setOverview] = useState({
+    total_product_types: 0,
+    total_current_stock: 0,
+    total_stock_value: 0,
+  })
+  const [thisMonth, setThisMonth] = useState({
+    import_receipts_count: 0,
+    export_receipts_count: 0,
+  })
+  const [alerts, setAlerts] = useState({
+    low_stock_count: 0,
+    expiring_soon_count: 0,
+    slow_moving_count: 0,
+    low_stock: [],
+    expiring_soon: [],
+    slow_moving: [],
+  })
+  const [recentImports, setRecentImports] = useState([])
+  const [recentExports, setRecentExports] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    Promise.all([
+      axiosClient.get('/inventory/dashboard'),
+      axiosClient.get('/inventory/alerts'),
+      axiosClient.get('/imports'),
+      axiosClient.get('/exports'),
+    ])
+      .then(([dashRes, alertRes, impRes, expRes]) => {
+        setOverview(dashRes.data.overview || {})
+        setThisMonth(dashRes.data.this_month || {})
+        setAlerts(alertRes.data || {})
+        setRecentImports((impRes.data || []).slice(0, 5))
+        setRecentExports((expRes.data || []).slice(0, 5))
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [])
+
+  const importColumns = [
+    { key: 'receipt_code', title: 'Mã phiếu' },
+    { key: 'supplier_name', title: 'Nhà cung cấp' },
+    { key: 'import_date', title: 'Ngày nhập' },
   ]
+
+  const exportColumns = [
+    { key: 'receipt_code', title: 'Mã phiếu' },
+    { key: 'reason', title: 'Lý do' },
+    { key: 'export_date', title: 'Ngày xuất' },
+  ]
+
+  const formatCurrency = (val) =>
+    new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0)
+
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <span className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
+      {/* KPI Cards */}
       <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Tổng sản phẩm" value="0" color="bg-blue-400" />
-        <StatCard title="Phiếu nhập tháng này" value="0" color="bg-emerald-400" />
-        <StatCard title="Phiếu xuất tháng này" value="0" color="bg-orange-400" />
-        <StatCard title="Cảnh báo tồn thấp" value="0" color="bg-red-400" />
+        <StatCard title="Tổng loại sản phẩm" value={overview.total_product_types} color="bg-blue-400" />
+        <StatCard title="Phiếu nhập tháng này" value={thisMonth.import_receipts_count} color="bg-emerald-400" />
+        <StatCard title="Phiếu xuất tháng này" value={thisMonth.export_receipts_count} color="bg-orange-400" />
+        <StatCard title="Cảnh báo tồn thấp" value={alerts.low_stock_count || 0} color="bg-red-400" />
       </section>
 
+      {/* Giá trị tồn kho */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <p className="text-sm text-slate-500">Tổng giá trị tồn kho hiện tại</p>
+        <p className="mt-1 text-3xl font-bold text-slate-800">
+          {formatCurrency(overview.total_stock_value)}
+        </p>
+        <p className="mt-1 text-sm text-slate-400">
+          Tổng tồn: <strong>{overview.total_current_stock?.toLocaleString()}</strong> sản phẩm
+        </p>
+      </div>
+
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <div className="xl:col-span-2">
-          <DataTable columns={columns} data={recentTransactions} />
+        {/* Giao dịch nhập gần đây */}
+        <div className="xl:col-span-1">
+          <h3 className="mb-3 text-lg font-bold text-slate-800">Nhập kho gần đây</h3>
+          <DataTable columns={importColumns} data={recentImports} />
         </div>
 
+        {/* Giao dịch xuất gần đây */}
+        <div className="xl:col-span-1">
+          <h3 className="mb-3 text-lg font-bold text-slate-800">Xuất kho gần đây</h3>
+          <DataTable columns={exportColumns} data={recentExports} />
+        </div>
+
+        {/* Cảnh báo nhanh */}
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h3 className="mb-5 text-xl font-bold text-slate-800">Cảnh báo nhanh</h3>
           <div className="space-y-4">
             <div className="rounded-xl bg-red-50 p-4">
-              <p className="text-sm font-semibold text-red-700">Tồn thấp</p>
-              <p className="mt-1 text-sm text-slate-600"> </p>
+              <p className="text-sm font-semibold text-red-700">
+                Tồn thấp — {alerts.low_stock_count || 0} sản phẩm
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                {alerts.low_stock?.slice(0, 2).map(s => s.product_name).join(', ') || 'Không có'}
+              </p>
             </div>
             <div className="rounded-xl bg-yellow-50 p-4">
-              <p className="text-sm font-semibold text-yellow-700">Sắp hết hạn</p>
-              <p className="mt-1 text-sm text-slate-600"> </p>
+              <p className="text-sm font-semibold text-yellow-700">
+                Sắp hết hạn (7 ngày) — {alerts.expiring_soon_count || 0} lô
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                {alerts.expiring_soon?.slice(0, 2).map(s => s.product_name).join(', ') || 'Không có'}
+              </p>
             </div>
             <div className="rounded-xl bg-orange-50 p-4">
-              <p className="text-sm font-semibold text-orange-700">Tồn lâu</p>
-              <p className="mt-1 text-sm text-slate-600"> </p>
+              <p className="text-sm font-semibold text-orange-700">
+                Tồn lâu (30 ngày) — {alerts.slow_moving_count || 0} sản phẩm
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                {alerts.slow_moving?.slice(0, 2).map(s => s.product_name).join(', ') || 'Không có'}
+              </p>
             </div>
           </div>
         </div>

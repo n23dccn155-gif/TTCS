@@ -3,7 +3,6 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 import AuthLayout from '../layouts/AuthLayout'
 import DashboardLayout from '../layouts/DashboardLayout'
 import LoginPage from '../pages/auth/LoginPage'
-import RegisterPage from '../pages/auth/RegisterPage'
 import ProfilePage from '../pages/auth/ProfilePage'
 import DashboardPage from '../pages/dashboard/DashboardPage'
 import ProductListPage from '../pages/products/ProductListPage'
@@ -24,7 +23,6 @@ export const router = createBrowserRouter([
     element: <AuthLayout />,
     children: [
       { path: 'login', element: <LoginPage /> },
-      { path: 'register', element: <RegisterPage /> },
     ],
   },
   {
