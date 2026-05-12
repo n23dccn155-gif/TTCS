@@ -1,4 +1,12 @@
 .DS_Store
-node_modules/
-.env
 ** / .DS_Store
+.env
+
+node_modules/
+frontend/node_modules/
+.eslintcache
+
+**/__pycache__/
+*.pyc
+backend/venv/
+.venv/
