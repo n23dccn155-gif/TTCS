@@ -136,19 +136,14 @@ const LoginPage = () => {
           </form>
 
           <div className="mt-6 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">
-            <p className="mb-2 font-semibold text-slate-700">Tài khoản demo:</p>
+            <p className="mb-2 font-semibold text-slate-700">Tài khoản quản trị mặc định:</p>
             <div className="flex gap-4">
               <div className="flex-1 rounded-lg bg-white px-3 py-2 shadow-sm">
                 <p className="text-xs text-slate-400">Admin</p>
                 <p className="font-medium">admin / 123456</p>
               </div>
-              <div className="flex-1 rounded-lg bg-white px-3 py-2 shadow-sm">
-                <p className="text-xs text-slate-400">Nhân viên</p>
-                <p className="font-medium">staff / 123456</p>
-              </div>
             </div>
           </div>
-          
         </div>
       </div>
     </div>

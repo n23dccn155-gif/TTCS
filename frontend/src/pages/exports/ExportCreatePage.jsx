@@ -1,21 +1,30 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import exportService from '../../services/exportService'
-
-const productOptions = [
-  { id: 1, name: 'Sữa tươi Vinamilk' },
-  { id: 2, name: 'Mì Hảo Hảo' },
-  { id: 3, name: 'Coca Cola' },
-]
+import productService from '../../services/productService'
 
 const ExportCreatePage = () => {
+  const [productOptions, setProductOptions] = useState([])
+
   const [formData, setFormData] = useState({
-    receiptCode: 'PX003',
+    receiptCode: '',
     exportDate: '',
-    reason: '',
+    customerName: '',
     note: '',
   })
 
-  const [items, setItems] = useState([{ productId: '', quantity: '' }])
+  const [items, setItems] = useState([{ productId: '', quantity: '', price: '' }])
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await productService.getAll()
+        setProductOptions(res.data)
+      } catch (error) {
+        console.error('Lỗi khi tải danh sách sản phẩm:', error)
+      }
+    }
+    fetchProducts()
+  }, [])
 
   const handleFormChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
@@ -28,7 +37,7 @@ const ExportCreatePage = () => {
   }
 
   const addRow = () => {
-    setItems([...items, { productId: '', quantity: '' }])
+    setItems([...items, { productId: '', quantity: '', price: '' }])
   }
 
   const removeRow = (index) => {
@@ -37,8 +46,14 @@ const ExportCreatePage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    await exportService.create({ ...formData, items })
-    alert('Tạo phiếu xuất thành công (demo)')
+    try {
+      await exportService.create({ ...formData, items })
+      alert('Tạo phiếu xuất thành công!')
+      setFormData({ receiptCode: '', exportDate: '', customerName: '', note: '' })
+      setItems([{ productId: '', quantity: '', price: '' }])
+    } catch (error) {
+      alert(error.response?.data?.message || 'Lỗi khi tạo phiếu xuất')
+    }
   }
 
   return (
@@ -46,7 +61,7 @@ const ExportCreatePage = () => {
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h3 className="text-xl font-bold text-slate-800">Tạo phiếu xuất kho</h3>
         <p className="mt-1 text-sm text-slate-500">
-          Lập phiếu xuất và kiểm tra số lượng tồn trước khi lưu
+          Nhập thông tin phiếu và danh sách sản phẩm cần xuất
         </p>
       </div>
 
@@ -54,14 +69,16 @@ const ExportCreatePage = () => {
         <div className="grid grid-cols-1 gap-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-2">
           <input
             type="text"
+            required
             name="receiptCode"
             value={formData.receiptCode}
             onChange={handleFormChange}
-            placeholder="Mã phiếu xuất"
+            placeholder="Mã phiếu xuất (VD: PX001)"
             className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
           />
           <input
             type="date"
+            required
             name="exportDate"
             value={formData.exportDate}
             onChange={handleFormChange}
@@ -69,10 +86,10 @@ const ExportCreatePage = () => {
           />
           <input
             type="text"
-            name="reason"
-            value={formData.reason}
+            name="customerName"
+            value={formData.customerName}
             onChange={handleFormChange}
-            placeholder="Lý do xuất"
+            placeholder="Tên khách hàng / Người nhận"
             className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
           />
           <input
@@ -101,9 +118,10 @@ const ExportCreatePage = () => {
             {items.map((item, index) => (
               <div
                 key={index}
-                className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-3"
+                className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-4"
               >
                 <select
+                  required
                   value={item.productId}
                   onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
                   className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-cyan-500"
@@ -111,23 +129,34 @@ const ExportCreatePage = () => {
                   <option value="">Chọn sản phẩm</option>
                   {productOptions.map((product) => (
                     <option key={product.id} value={product.id}>
-                      {product.name}
+                      {product.name} ({product.product_code}) - Tồn: {product.current_stock || 0}
                     </option>
                   ))}
                 </select>
 
                 <input
                   type="number"
-                  placeholder="Số lượng xuất"
+                  required
+                  min="1"
+                  placeholder="Số lượng"
                   value={item.quantity}
                   onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
                   className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-cyan-500"
                 />
-
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  placeholder="Đơn giá xuất"
+                  value={item.price}
+                  onChange={(e) => handleItemChange(index, 'price', e.target.value)}
+                  className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-cyan-500"
+                />
                 <button
                   type="button"
                   onClick={() => removeRow(index)}
-                  className="rounded-xl bg-red-500 px-4 py-3 font-semibold text-white hover:bg-red-600"
+                  disabled={items.length === 1}
+                  className="rounded-xl bg-red-500 px-4 py-3 font-semibold text-white hover:bg-red-600 disabled:bg-red-300 disabled:cursor-not-allowed"
                 >
                   Xóa
                 </button>
@@ -138,7 +167,7 @@ const ExportCreatePage = () => {
           <div className="mt-6 flex justify-end">
             <button
               type="submit"
-              className="rounded-xl bg-emerald-500 px-6 py-3 font-semibold text-white hover:bg-emerald-600"
+              className="rounded-xl bg-indigo-500 px-6 py-3 font-semibold text-white shadow-md shadow-indigo-200 hover:bg-indigo-600"
             >
               Lưu phiếu xuất
             </button>
