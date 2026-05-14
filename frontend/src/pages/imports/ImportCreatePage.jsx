@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react'
 import importService from '../../services/importService'
 import productService from '../../services/productService'
 import supplierService from '../../services/supplierService'
+import locationService from '../../services/locationService'
 
 const ImportCreatePage = () => {
   const [productOptions, setProductOptions] = useState([])
   const [supplierOptions, setSupplierOptions] = useState([])
+  const [locationOptions, setLocationOptions] = useState([])
   
   const [formData, setFormData] = useState({
     receiptCode: '',
@@ -15,19 +17,21 @@ const ImportCreatePage = () => {
   })
 
   const [items, setItems] = useState([
-    { productId: '', productName: '', quantity: '', price: '', totalAmount: 0, expiryDate: '', isNewProduct: true },
+    { productId: '', productName: '', quantity: '', price: '', totalAmount: 0, expiryDate: '', locationId: '', isNewProduct: true },
   ])
 
   useEffect(() => {
-    // Fetch danh sách sản phẩm và nhà cung cấp thực tế từ DB
+    // Fetch danh sách sản phẩm, nhà cung cấp và vị trí kệ từ DB
     const fetchOptions = async () => {
       try {
-        const [prodRes, supRes] = await Promise.all([
+        const [prodRes, supRes, locRes] = await Promise.all([
           productService.getAll(),
-          supplierService.getAll()
+          supplierService.getAll(),
+          locationService.getAvailable()
         ])
         setProductOptions(prodRes.data)
         setSupplierOptions(supRes.data)
+        setLocationOptions(locRes.data)
       } catch (error) {
         console.error('Lỗi khi tải dữ liệu:', error)
       }
@@ -60,14 +64,13 @@ const ImportCreatePage = () => {
       const prc = parseFloat(updated[index].price) || 0
       updated[index].totalAmount = qty * prc
     }
-
     setItems(updated)
   }
 
   const addRow = () => {
     setItems([
       ...items,
-      { productId: '', productName: '', quantity: '', price: '', totalAmount: 0, expiryDate: '', isNewProduct: true },
+      { productId: '', productName: '', quantity: '', price: '', totalAmount: 0, expiryDate: '', locationId: '', isNewProduct: true },
     ])
   }
 
@@ -82,7 +85,7 @@ const ImportCreatePage = () => {
       alert('Tạo phiếu nhập thành công!')
       // Reset form sau khi tạo xong
       setFormData({ receiptCode: '', importDate: '', supplierId: '', note: '' })
-      setItems([{ productId: '', productName: '', quantity: '', price: '', totalAmount: 0, expiryDate: '', isNewProduct: true }])
+      setItems([{ productId: '', productName: '', quantity: '', price: '', totalAmount: 0, expiryDate: '', locationId: '', isNewProduct: true }])
     } catch (error) {
       alert(error.response?.data?.message || 'Lỗi khi tạo phiếu nhập')
     }
@@ -161,13 +164,13 @@ const ImportCreatePage = () => {
             {items.map((item, index) => (
               <div
                 key={index}
-                className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-7 items-end"
+                className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-8 items-end"
               >
                 <div className="relative">
                   <input
                     type="text"
                     required
-                    list={`product-list-${index}`} // ID duy nhất cho mỗi dòng
+                    list={`product-list-${index}`}
                     placeholder="Nhập ID"
                     value={item.productId}
                     onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
@@ -182,7 +185,6 @@ const ImportCreatePage = () => {
                   </datalist>
                 </div>
 
-                 {/* 2. Ô Tên sản phẩm (Tự động điền hoặc nhập mới) */}
                 <input
                   type="text"
                   placeholder="Tên sản phẩm"
@@ -223,7 +225,19 @@ const ImportCreatePage = () => {
                   className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-cyan-500"
                 />
 
-                {/* 6. Thành tiền */}
+                <select
+                  value={item.locationId}
+                  onChange={(e) => handleItemChange(index, 'locationId', e.target.value)}
+                  className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-cyan-500 bg-white"
+                >
+                  <option value="">Chọn kệ cất</option>
+                  {locationOptions.map((loc) => (
+                    <option key={loc.id} value={loc.id}>
+                      {loc.name} ({loc.location_code}) - Trống: {loc.max_capacity - (loc.current_occupied || 0)}
+                    </option>
+                  ))}
+                </select>
+
                 <div className="flex flex-col space-y-1">
                   <span className="text-[10px] font-bold text-slate-400 uppercase ml-1">Thành tiền</span>
                   <input

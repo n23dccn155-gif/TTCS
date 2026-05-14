@@ -148,7 +148,11 @@ def create_export():
         "reason": "SELL",
         "note": "Xuất cho khách hàng A",
         "items": [
-            {"product_id": 2, "quantity": 150}
+            {
+                "product_id": 2,       (hoặc "productId")
+                "quantity": 150,
+                "selling_price": 50000 (hoặc "sellingPrice" — giá bán, tùy chọn)
+            }
         ]
     }
     """
@@ -180,13 +184,21 @@ def create_export():
                 reason=reason,
                 note=data.get('note'),
                 created_by=current_user_id,
+                total_amount=0,   # Sẽ tính và cập nhật sau
+                status='COMPLETED',
             )
             db.session.add(receipt)
             db.session.flush()
 
+            total_amount = 0
+
             for item in items:
-                product_id = item.get('product_id')
+                # Đồng bộ camelCase (Frontend) và snake_case (API)
+                product_id = item.get('product_id') or item.get('productId')
                 qty_needed = int(item.get('quantity', 0))
+                selling_price = float(
+                    item.get('selling_price') or item.get('sellingPrice') or 0
+                )
 
                 if not product_id or qty_needed <= 0:
                     raise ValueError(f"Invalid item: {item}")
@@ -239,9 +251,20 @@ def create_export():
                         product_id=product_id,
                         import_detail_id=lot_id,
                         quantity=qty_from_this_lot,
+                        selling_price=selling_price,
                     )
                     db.session.add(export_detail)
                     qty_remaining -= qty_from_this_lot
+                    total_amount += qty_from_this_lot * selling_price
+
+                    # Cập nhật sức chứa kệ kho (nếu lô này có gắn location)
+                    from app.model.import_detail import ImportDetail as ID
+                    lot_detail = db.session.get(ID, lot_id)
+                    if lot_detail and lot_detail.location_id:
+                        from app.model.location import Location
+                        loc = db.session.get(Location, lot_detail.location_id)
+                        if loc:
+                            loc.current_occupied = max(0, loc.current_occupied - qty_from_this_lot)
 
                 if qty_remaining > 0:
                     raise ValueError(
@@ -249,15 +272,20 @@ def create_export():
                         f"for product_id={product_id}. Possible data inconsistency."
                     )
 
+            # Cập nhật tổng tiền phiếu xuất
+            receipt.total_amount = total_amount
+
         return jsonify({
             'message': 'Export receipt created successfully (FEFO applied)',
             'receipt_code': receipt.receipt_code,
             'receipt_id': receipt.id,
+            'total_amount': total_amount,
         }), 201
 
     except ValueError as e:
         return jsonify({'error': str(e)}), 400
     except Exception as e:
+
         return jsonify({'error': f'Internal server error: {str(e)}'}), 500
 
 

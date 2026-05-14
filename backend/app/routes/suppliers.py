@@ -24,12 +24,15 @@ def get_by_id(id):
 @jwt_required()
 def create():
     data = request.get_json()
+    if not data or not data.get('name'):
+        return jsonify({'error': 'Tên nhà cung cấp không được để trống'}), 400
     supplier = Supplier(
         name=data.get('name'),
         contact_person=data.get('contact_person'),
         phone=data.get('phone'),
         email=data.get('email'),
         address=data.get('address'),
+        tax_code=data.get('tax_code'),
         is_active=True,
     )
     db.session.add(supplier)
@@ -47,6 +50,7 @@ def update(id):
     supplier.phone = data.get('phone', supplier.phone)
     supplier.email = data.get('email', supplier.email)
     supplier.address = data.get('address', supplier.address)
+    supplier.tax_code = data.get('tax_code', supplier.tax_code)
     db.session.commit()
     return jsonify(supplier.to_dict()), 200
 

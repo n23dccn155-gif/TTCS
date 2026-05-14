@@ -1,6 +1,6 @@
 venv/
 __pycache__/
 *.pyc
-.env
+# .env (Đã mở khóa để push lên Git cho nhóm)
 instance/
 .pytest_cache/

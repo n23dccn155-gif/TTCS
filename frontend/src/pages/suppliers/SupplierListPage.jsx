@@ -26,6 +26,7 @@ const SupplierListPage = () => {
     phone: '',
     email: '',
     address: '',
+    tax_code: '',
   })
 
   const fetchData = async () => {
@@ -96,6 +97,7 @@ const SupplierListPage = () => {
       phone: supplier.phone || '',
       email: supplier.email || '',
       address: supplier.address || '',
+      tax_code: supplier.tax_code || '',
     })
     setIsEditOpen(true)
   }
@@ -107,11 +109,17 @@ const SupplierListPage = () => {
       phone: '',
       email: '',
       address: '',
+      tax_code: '',
     })
   }
 
   const columns = [
     { key: 'name', title: 'Tên nhà cung cấp' },
+    { 
+      key: 'tax_code', 
+      title: 'Mã số thuế',
+      render: (row) => row.tax_code || <span className="text-slate-400 italic">Chưa cập nhật</span>
+    },
     { 
       key: 'contact_person', 
       title: 'Người liên hệ',
@@ -224,16 +232,28 @@ const SupplierListPage = () => {
             </div>
             
             <form onSubmit={handleCreateSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="mb-1 block text-sm font-semibold text-slate-700">Tên nhà cung cấp <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ví dụ: Công ty TNHH ABC"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-slate-700">Tên nhà cung cấp <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ví dụ: Công ty TNHH ABC"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-slate-700">Mã số thuế</label>
+                  <input
+                    type="text"
+                    placeholder="Ví dụ: 0101234567"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    value={formData.tax_code}
+                    onChange={(e) => setFormData({...formData, tax_code: e.target.value})}
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -315,16 +335,28 @@ const SupplierListPage = () => {
             </div>
             
             <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="mb-1 block text-sm font-semibold text-slate-700">Tên nhà cung cấp <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ví dụ: Công ty TNHH ABC"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-slate-700">Tên nhà cung cấp <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ví dụ: Công ty TNHH ABC"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-slate-700">Mã số thuế</label>
+                  <input
+                    type="text"
+                    placeholder="Ví dụ: 0101234567"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    value={formData.tax_code}
+                    onChange={(e) => setFormData({...formData, tax_code: e.target.value})}
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

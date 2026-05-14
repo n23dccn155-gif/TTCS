@@ -18,11 +18,18 @@ class ImportDetail(db.Model):
     unit_price = db.Column(db.Numeric(15, 2), nullable=False, default=0)
     batch_code = db.Column(db.String(100))
     expiry_date = db.Column(db.Date, index=True)
+    # [MỚI] Vị trí kệ thực tế chứa lô hàng này trong kho
+    location_id = db.Column(
+        db.Integer, db.ForeignKey('locations.id', ondelete='SET NULL'),
+        nullable=True, index=True
+    )
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     export_details = db.relationship(
         'ExportDetail', backref='import_detail', lazy=True
     )
+    # Quan hệ tới vị trí kệ chứa lô hàng này
+    lot_location = db.relationship('Location', foreign_keys=[location_id])
 
     def to_dict(self):
         return {
@@ -35,5 +42,7 @@ class ImportDetail(db.Model):
             'unit_price': float(self.unit_price) if self.unit_price else 0,
             'batch_code': self.batch_code,
             'expiry_date': self.expiry_date.isoformat() if self.expiry_date else None,
+            'location_id': self.location_id,
+            'location_code': self.lot_location.location_code if self.lot_location else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
         }
