@@ -12,7 +12,7 @@ const ExportCreatePage = () => {
     note: '',
   })
 
-  const [items, setItems] = useState([{ productId: '', quantity: '', price: '' }])
+  const [items, setItems] = useState([{ productId: '', quantity: '', price: '', totalAmount: 0 }])
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -33,11 +33,19 @@ const ExportCreatePage = () => {
   const handleItemChange = (index, field, value) => {
     const updated = [...items]
     updated[index][field] = value
+
+    // Tính thành tiền
+    if (field === 'quantity' || field === 'price') {
+      const qty = parseFloat(updated[index].quantity) || 0
+      const prc = parseFloat(updated[index].price) || 0
+      updated[index].totalAmount = qty * prc
+    }
+
     setItems(updated)
   }
 
   const addRow = () => {
-    setItems([...items, { productId: '', quantity: '', price: '' }])
+    setItems([...items, { productId: '', quantity: '', price: '', totalAmount: 0 }])
   }
 
   const removeRow = (index) => {
@@ -50,7 +58,7 @@ const ExportCreatePage = () => {
       await exportService.create({ ...formData, items })
       alert('Tạo phiếu xuất thành công!')
       setFormData({ receiptCode: '', exportDate: '', customerName: '', note: '' })
-      setItems([{ productId: '', quantity: '', price: '' }])
+      setItems([{ productId: '', quantity: '', price: '', totalAmount: 0 }])
     } catch (error) {
       alert(error.response?.data?.message || 'Lỗi khi tạo phiếu xuất')
     }
@@ -118,7 +126,7 @@ const ExportCreatePage = () => {
             {items.map((item, index) => (
               <div
                 key={index}
-                className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-4"
+                className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-5 items-end"
               >
                 <select
                   required
@@ -147,16 +155,29 @@ const ExportCreatePage = () => {
                   type="number"
                   required
                   min="0"
+                  step="1000"
                   placeholder="Đơn giá xuất"
                   value={item.price}
                   onChange={(e) => handleItemChange(index, 'price', e.target.value)}
                   className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-cyan-500"
                 />
+
+                {/* Thành tiền */}
+                <div className="flex flex-col space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase ml-1">Thành tiền</span>
+                  <input
+                    type="text"
+                    readOnly
+                    value={(item.totalAmount || 0).toLocaleString('vi-VN')}
+                    className="rounded-xl border border-slate-300 bg-slate-100 px-4 py-3 outline-none text-slate-600 font-semibold cursor-not-allowed"
+                  />
+                </div>
+
                 <button
                   type="button"
                   onClick={() => removeRow(index)}
                   disabled={items.length === 1}
-                  className="rounded-xl bg-red-500 px-4 py-3 font-semibold text-white hover:bg-red-600 disabled:bg-red-300 disabled:cursor-not-allowed"
+                  className="rounded-xl bg-red-500 px-4 py-3 font-semibold text-white hover:bg-red-600 disabled:bg-red-300 disabled:cursor-not-allowed h-[48px]"
                 >
                   Xóa
                 </button>
