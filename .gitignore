@@ -1,6 +1,6 @@
 .DS_Store
 ** / .DS_Store
-.env
+# .env (Đã mở khóa)
 
 node_modules/
 frontend/node_modules/
