@@ -11,6 +11,8 @@ class Supplier(db.Model):
     phone = db.Column(db.String(20))
     email = db.Column(db.String(120))
     address = db.Column(db.Text)
+    # [MỚI] Mã số thuế doanh nghiệp — bắt buộc cho hóa đơn VAT
+    tax_code = db.Column(db.String(50), nullable=True)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -24,6 +26,8 @@ class Supplier(db.Model):
             'phone': self.phone,
             'email': self.email,
             'address': self.address,
+            'tax_code': self.tax_code,
             'is_active': self.is_active,
             'created_at': self.created_at.isoformat() if self.created_at else None,
         }
+

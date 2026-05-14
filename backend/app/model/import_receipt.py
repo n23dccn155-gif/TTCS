@@ -21,6 +21,10 @@ class ImportReceipt(db.Model):
         db.Integer, db.ForeignKey('suppliers.id', ondelete='RESTRICT'),
         nullable=False, index=True
     )
+    # [MỚI] Tổng tiền phiếu nhập (đồng bộ với totalAmount Frontend tính sẵn)
+    total_amount = db.Column(db.Numeric(15, 2), nullable=False, default=0)
+    # [MỚI] Trạng thái phiếu: COMPLETED | CANCELLED
+    status = db.Column(db.String(20), nullable=False, default='COMPLETED')
     note = db.Column(db.Text)
     created_by = db.Column(
         db.Integer, db.ForeignKey('users.id', ondelete='RESTRICT'),
@@ -41,9 +45,11 @@ class ImportReceipt(db.Model):
             'import_date': self.import_date.isoformat() if self.import_date else None,
             'supplier_id': self.supplier_id,
             'supplier_name': self.supplier.name if self.supplier else None,
+            'total_amount': float(self.total_amount) if self.total_amount else 0,
+            'status': self.status,
             'note': self.note,
             'created_by': self.created_by,
-            'creator_name': self.creator.username if self.creator else None,
+            'creator_name': self.creator.full_name if self.creator else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
         }
         if include_details:

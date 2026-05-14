@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react'
 import importService from '../../services/importService'
 import productService from '../../services/productService'
 import supplierService from '../../services/supplierService'
+import locationService from '../../services/locationService'
 
 const ImportCreatePage = () => {
   const [productOptions, setProductOptions] = useState([])
   const [supplierOptions, setSupplierOptions] = useState([])
+  const [locationOptions, setLocationOptions] = useState([])
   
   const [formData, setFormData] = useState({
     receiptCode: '',
@@ -15,19 +17,21 @@ const ImportCreatePage = () => {
   })
 
   const [items, setItems] = useState([
-    { productId: '', quantity: '', price: '', expiryDate: '' },
+    { productId: '', productName: '', quantity: '', price: '', totalAmount: 0, expiryDate: '', locationId: '', isNewProduct: true },
   ])
 
   useEffect(() => {
-    // Fetch danh sách sản phẩm và nhà cung cấp thực tế từ DB
+    // Fetch danh sách sản phẩm, nhà cung cấp và vị trí kệ từ DB
     const fetchOptions = async () => {
       try {
-        const [prodRes, supRes] = await Promise.all([
+        const [prodRes, supRes, locRes] = await Promise.all([
           productService.getAll(),
-          supplierService.getAll()
+          supplierService.getAll(),
+          locationService.getAvailable()
         ])
         setProductOptions(prodRes.data)
         setSupplierOptions(supRes.data)
+        setLocationOptions(locRes.data)
       } catch (error) {
         console.error('Lỗi khi tải dữ liệu:', error)
       }
@@ -42,11 +46,19 @@ const ImportCreatePage = () => {
   const handleItemChange = (index, field, value) => {
     const updated = [...items]
     updated[index][field] = value
+    if (field === 'quantity' || field === 'price') {
+      const qty = Number(updated[index].quantity) || 0
+      const prc = Number(updated[index].price) || 0
+      updated[index].totalAmount = qty * prc
+    }
     setItems(updated)
   }
 
   const addRow = () => {
-    setItems([...items, { productId: '', quantity: '', price: '', expiryDate: '' }])
+    setItems([
+      ...items,
+      { productId: '', productName: '', quantity: '', price: '', totalAmount: 0, expiryDate: '', locationId: '', isNewProduct: true },
+    ])
   }
 
   const removeRow = (index) => {
@@ -60,7 +72,7 @@ const ImportCreatePage = () => {
       alert('Tạo phiếu nhập thành công!')
       // Reset form sau khi tạo xong
       setFormData({ receiptCode: '', importDate: '', supplierId: '', note: '' })
-      setItems([{ productId: '', quantity: '', price: '', expiryDate: '' }])
+      setItems([{ productId: '', productName: '', quantity: '', price: '', totalAmount: 0, expiryDate: '', locationId: '', isNewProduct: true }])
     } catch (error) {
       alert(error.response?.data?.message || 'Lỗi khi tạo phiếu nhập')
     }
@@ -134,7 +146,7 @@ const ImportCreatePage = () => {
             {items.map((item, index) => (
               <div
                 key={index}
-                className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-5"
+                className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-8 items-end"
               >
                 <select
                   required
@@ -175,6 +187,31 @@ const ImportCreatePage = () => {
                   onChange={(e) => handleItemChange(index, 'expiryDate', e.target.value)}
                   className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-cyan-500"
                 />
+
+                <select
+                  value={item.locationId}
+                  onChange={(e) => handleItemChange(index, 'locationId', e.target.value)}
+                  className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-cyan-500 bg-white"
+                >
+                  <option value="">Chọn kệ cất</option>
+                  {locationOptions.map((loc) => (
+                    <option key={loc.id} value={loc.id}>
+                      {loc.name} ({loc.location_code}) - Trống: {loc.max_capacity - (loc.current_occupied || 0)}
+                    </option>
+                  ))}
+                </select>
+
+                {/* 6. Thành tiền */}
+                <div className="flex flex-col space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase ml-1">Thành tiền</span>
+                  <input
+                    type="text"
+                    readOnly
+                    value={(item.totalAmount || 0).toLocaleString('vi-VN')}
+                    className="rounded-xl border border-slate-300 bg-slate-100 px-4 py-3 outline-none text-slate-600 font-semibold cursor-not-allowed"
+                  />
+                </div>
+
                 <button
                   type="button"
                   onClick={() => removeRow(index)}

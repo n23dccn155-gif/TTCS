@@ -3,6 +3,7 @@ import PageHeader from '../../components/common/PageHeader'
 import DataTable from '../../components/common/DataTable'
 import EmptyState from '../../components/common/EmptyState'
 import productService from '../../services/productService'
+import locationService from '../../services/locationService'
 import { useAuth } from '../../contexts/AuthContext'
 import { X, Edit2, Trash2, ShieldAlert } from 'lucide-react'
 
@@ -11,6 +12,7 @@ const ProductListPage = () => {
   const isAdmin = user?.role === 'admin'
 
   const [products, setProducts] = useState([])
+  const [locations, setLocations] = useState([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -26,17 +28,23 @@ const ProductListPage = () => {
     category: '',
     unit: '',
     min_stock: 0,
+    max_stock: 10000,
     unit_price: '',
     description: '',
+    location_id: '',
   })
 
   const fetchProducts = async () => {
     setLoading(true)
     try {
-      const res = await productService.getAll()
-      setProducts(res.data)
+      const [prodRes, locRes] = await Promise.all([
+        productService.getAll(),
+        locationService.getAll()
+      ])
+      setProducts(prodRes.data)
+      setLocations(locRes.data)
     } catch (error) {
-      console.error('Failed to fetch products', error)
+      console.error('Failed to fetch data', error)
     } finally {
       setLoading(false)
     }
@@ -97,8 +105,10 @@ const ProductListPage = () => {
       category: product.category || '',
       unit: product.unit || '',
       min_stock: product.min_stock || 0,
+      max_stock: product.max_stock || 10000,
       unit_price: product.unit_price || '',
       description: product.description || '',
+      location_id: product.location_id || '',
     })
     setIsEditOpen(true)
   }
@@ -110,8 +120,10 @@ const ProductListPage = () => {
       category: '',
       unit: '',
       min_stock: 0,
+      max_stock: 10000,
       unit_price: '',
       description: '',
+      location_id: '',
     })
   }
 
@@ -131,13 +143,14 @@ const ProductListPage = () => {
       title: 'Đơn giá',
       render: (row) => <span className="font-medium text-slate-900">{formatCurrency(row.unit_price)}</span>
     },
-    { key: 'min_stock', title: 'Ngưỡng tối thiểu' },
+    { key: 'min_stock', title: 'Min/Max', render: (row) => `${row.min_stock} / ${row.max_stock || 10000}` },
     {
       key: 'current_stock',
       title: 'Tồn thực tế',
       render: (row) => {
         const stock = row.current_stock || 0
         const min = row.min_stock || 0
+        const max = row.max_stock || 10000
         if (stock === 0) {
           return (
             <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">
@@ -148,6 +161,12 @@ const ProductListPage = () => {
           return (
             <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
               Tồn kho thấp ({stock})
+            </span>
+          )
+        } else if (stock > max) {
+          return (
+            <span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-700">
+              Vượt tối đa ({stock})
             </span>
           )
         } else {
@@ -320,7 +339,23 @@ const ProductListPage = () => {
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700">Ngưỡng cảnh báo tối thiểu <span className="text-red-500">*</span></label>
+                  <label className="mb-1 block text-sm font-semibold text-slate-700">Kệ kho mặc định</label>
+                  <select
+                    className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 bg-white"
+                    value={formData.location_id}
+                    onChange={(e) => setFormData({...formData, location_id: e.target.value})}
+                  >
+                    <option value="">Chọn kệ chứa</option>
+                    {locations.map(loc => (
+                      <option key={loc.id} value={loc.id}>{loc.name} ({loc.location_code})</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-slate-700">Ngưỡng tối thiểu <span className="text-red-500">*</span></label>
                   <input
                     type="number"
                     required
@@ -328,6 +363,17 @@ const ProductListPage = () => {
                     className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                     value={formData.min_stock}
                     onChange={(e) => setFormData({...formData, min_stock: parseInt(e.target.value) || 0})}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-slate-700">Ngưỡng tối đa <span className="text-red-500">*</span></label>
+                  <input
+                    type="number"
+                    required
+                    placeholder="Ví dụ: 10000"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    value={formData.max_stock}
+                    onChange={(e) => setFormData({...formData, max_stock: parseInt(e.target.value) || 0})}
                   />
                 </div>
               </div>
@@ -436,7 +482,23 @@ const ProductListPage = () => {
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700">Ngưỡng cảnh báo tối thiểu <span className="text-red-500">*</span></label>
+                  <label className="mb-1 block text-sm font-semibold text-slate-700">Kệ kho mặc định</label>
+                  <select
+                    className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 bg-white"
+                    value={formData.location_id}
+                    onChange={(e) => setFormData({...formData, location_id: e.target.value})}
+                  >
+                    <option value="">Chọn kệ chứa</option>
+                    {locations.map(loc => (
+                      <option key={loc.id} value={loc.id}>{loc.name} ({loc.location_code})</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-slate-700">Ngưỡng tối thiểu <span className="text-red-500">*</span></label>
                   <input
                     type="number"
                     required
@@ -444,6 +506,17 @@ const ProductListPage = () => {
                     className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                     value={formData.min_stock}
                     onChange={(e) => setFormData({...formData, min_stock: parseInt(e.target.value) || 0})}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-slate-700">Ngưỡng tối đa <span className="text-red-500">*</span></label>
+                  <input
+                    type="number"
+                    required
+                    placeholder="Ví dụ: 10000"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    value={formData.max_stock}
+                    onChange={(e) => setFormData({...formData, max_stock: parseInt(e.target.value) || 0})}
                   />
                 </div>
               </div>
