@@ -46,9 +46,22 @@ const ImportCreatePage = () => {
   const handleItemChange = (index, field, value) => {
     const updated = [...items]
     updated[index][field] = value
+
+    // Tự động điền tên sản phẩm nếu nhập ID
+    if (field === 'productId') {
+      const product = productOptions.find((p) => String(p.id) === String(value))
+      if (product) {
+        updated[index].productName = product.name
+        updated[index].isNewProduct = false
+      } else {
+        updated[index].isNewProduct = true
+      }
+    }
+
+    // Tính thành tiền
     if (field === 'quantity' || field === 'price') {
-      const qty = Number(updated[index].quantity) || 0
-      const prc = Number(updated[index].price) || 0
+      const qty = parseFloat(updated[index].quantity) || 0
+      const prc = parseFloat(updated[index].price) || 0
       updated[index].totalAmount = qty * prc
     }
     setItems(updated)
@@ -106,20 +119,25 @@ const ImportCreatePage = () => {
             onChange={handleFormChange}
             className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
           />
-          <select
-            name="supplierId"
-            required
-            value={formData.supplierId}
-            onChange={handleFormChange}
-            className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
-          >
-            <option value="">-- Chọn nhà cung cấp --</option>
-            {supplierOptions.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <input
+              type="text"
+              name="supplierId"
+              required
+              list="supplier-list"
+              value={formData.supplierId}
+              onChange={handleFormChange}
+              placeholder="Nhập nhà cung cấp (ID hoặc chọn từ danh sách)"
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
+            />
+            <datalist id="supplier-list">
+              {supplierOptions.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </datalist>
+          </div>
           <input
             type="text"
             name="note"
@@ -148,19 +166,37 @@ const ImportCreatePage = () => {
                 key={index}
                 className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-8 items-end"
               >
-                <select
-                  required
-                  value={item.productId}
-                  onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
-                  className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-cyan-500"
-                >
-                  <option value="">Chọn sản phẩm</option>
-                  {productOptions.map((product) => (
-                    <option key={product.id} value={product.id}>
-                      {product.name} ({product.product_code})
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <input
+                    type="text"
+                    required
+                    list={`product-list-${index}`}
+                    placeholder="Nhập ID"
+                    value={item.productId}
+                    onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-cyan-500"
+                  />
+                  <datalist id={`product-list-${index}`}>
+                    {productOptions.map((product) => (
+                      <option key={product.id} value={product.id}>
+                        {product.name}
+                      </option>
+                    ))}
+                  </datalist>
+                </div>
+
+                <input
+                  type="text"
+                  placeholder="Tên sản phẩm"
+                  readOnly={!item.isNewProduct}
+                  value={item.productName || ''}
+                  onChange={(e) => handleItemChange(index, 'productName', e.target.value)}
+                  className={`rounded-xl border border-slate-300 px-4 py-3 outline-none ${
+                    !item.isNewProduct 
+                      ? 'bg-slate-100 text-slate-500 cursor-not-allowed' 
+                      : 'bg-white text-slate-800 focus:border-cyan-500'
+                  }`}
+                />
 
                 <input
                   type="number"
@@ -175,6 +211,7 @@ const ImportCreatePage = () => {
                   type="number"
                   required
                   min="0"
+                  step="1000"
                   placeholder="Đơn giá nhập"
                   value={item.price}
                   onChange={(e) => handleItemChange(index, 'price', e.target.value)}
@@ -201,7 +238,6 @@ const ImportCreatePage = () => {
                   ))}
                 </select>
 
-                {/* 6. Thành tiền */}
                 <div className="flex flex-col space-y-1">
                   <span className="text-[10px] font-bold text-slate-400 uppercase ml-1">Thành tiền</span>
                   <input
@@ -216,7 +252,7 @@ const ImportCreatePage = () => {
                   type="button"
                   onClick={() => removeRow(index)}
                   disabled={items.length === 1}
-                  className="rounded-xl bg-red-500 px-4 py-3 font-semibold text-white hover:bg-red-600 disabled:bg-red-300 disabled:cursor-not-allowed"
+                  className="rounded-xl bg-red-500 px-4 py-3 font-semibold text-white hover:bg-red-600 disabled:bg-red-300 disabled:cursor-not-allowed h-[48px]"
                 >
                   Xóa
                 </button>
