@@ -5,7 +5,7 @@ import EmptyState from '../../components/common/EmptyState'
 import productService from '../../services/productService'
 import locationService from '../../services/locationService'
 import { useAuth } from '../../contexts/AuthContext'
-import { X, Edit2, Trash2, ShieldAlert } from 'lucide-react'
+import { X, Edit2, Trash2, ShieldAlert, ArrowUpDown } from 'lucide-react'
 
 const ProductListPage = () => {
   const { user } = useAuth()
@@ -15,6 +15,7 @@ const ProductListPage = () => {
   const [locations, setLocations] = useState([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(false)
+  const [sortBy, setSortBy] = useState('id')
 
   // Modals state
   const [isCreateOpen, setIsCreateOpen] = useState(false)
@@ -54,12 +55,23 @@ const ProductListPage = () => {
     fetchProducts()
   }, [])
 
-  const filteredProducts = products.filter(
-    (item) =>
-      (item.name || '').toLowerCase().includes(search.toLowerCase()) ||
-      (item.product_code || '').toLowerCase().includes(search.toLowerCase()) ||
-      (item.category || '').toLowerCase().includes(search.toLowerCase())
-  )
+  const filteredProducts = products
+    .filter(
+      (item) =>
+        (item.name || '').toLowerCase().includes(search.toLowerCase()) ||
+        (item.product_code || '').toLowerCase().includes(search.toLowerCase()) ||
+        (item.category || '').toLowerCase().includes(search.toLowerCase())
+    )
+    .sort((a, b) => {
+      if (sortBy === 'name') {
+        return (a.name || '').localeCompare(b.name || '')
+      }
+      if (sortBy === 'price_desc') {
+        return (b.unit_price || 0) - (a.unit_price || 0)
+      }
+      // Default: sort by ID (ascending)
+      return (a.id || 0) - (b.id || 0)
+    })
 
   const handleCreateSubmit = async (e) => {
     e.preventDefault()
@@ -252,14 +264,32 @@ const ProductListPage = () => {
         }
       />
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <input
-          type="text"
-          placeholder="Tìm theo mã, tên hoặc danh mục sản phẩm..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
-        />
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Tìm theo mã, tên hoặc danh mục sản phẩm..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+          />
+        </div>
+        
+        <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-50">
+          <div className="flex items-center gap-2 text-slate-500">
+            <ArrowUpDown className="h-4 w-4" />
+            <span className="text-sm font-medium">Sắp xếp theo:</span>
+          </div>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 outline-none transition hover:border-cyan-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+          >
+            <option value="id">ID sản phẩm</option>
+            <option value="name">Tên sản phẩm</option>
+            <option value="price_desc">Đơn giá</option>
+          </select>
+        </div>
       </div>
 
       <div className="rounded-2xl bg-white shadow-sm border border-slate-200">
@@ -312,7 +342,17 @@ const ProductListPage = () => {
                     className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                     value={formData.category}
                     onChange={(e) => setFormData({...formData, category: e.target.value})}
+                    list="category"
                   />
+                  <datalist id="category">
+                    <option value="Thực phẩm"></option>
+                    <option value="Đồ uống"></option>
+                    <option value="Gia dụng"></option>
+                    <option value="Điện tử"></option>
+                    <option value="Thời trang"></option>
+                    <option value="Vật liệu xây dựng"></option>
+                    <option value="Khác"></option>
+                  </datalist>
                 </div>
                 <div>
                   <label className="mb-1 block text-sm font-semibold text-slate-700">Đơn vị tính <span className="text-red-500">*</span></label>
@@ -332,6 +372,7 @@ const ProductListPage = () => {
                   <label className="mb-1 block text-sm font-semibold text-slate-700">Đơn giá bán (VND)</label>
                   <input
                     type="number"
+                    step="1000"
                     placeholder="Ví dụ: 15000"
                     className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                     value={formData.unit_price}
@@ -455,7 +496,17 @@ const ProductListPage = () => {
                     className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                     value={formData.category}
                     onChange={(e) => setFormData({...formData, category: e.target.value})}
+                    list="category"
                   />
+                  <datalist id="category">
+                    <option value="Thực phẩm"></option>
+                    <option value="Đồ uống"></option>
+                    <option value="Gia dụng"></option>
+                    <option value="Điện tử"></option>
+                    <option value="Thời trang"></option>
+                    <option value="Vật liệu xây dựng"></option>
+                    <option value="Khác"></option>
+                  </datalist>
                 </div>
                 <div>
                   <label className="mb-1 block text-sm font-semibold text-slate-700">Đơn vị tính <span className="text-red-500">*</span></label>
@@ -475,6 +526,7 @@ const ProductListPage = () => {
                   <label className="mb-1 block text-sm font-semibold text-slate-700">Đơn giá bán (VND)</label>
                   <input
                     type="number"
+                    step="1000"
                     placeholder="Ví dụ: 15000"
                     className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                     value={formData.unit_price}

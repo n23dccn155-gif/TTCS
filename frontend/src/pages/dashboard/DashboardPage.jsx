@@ -2,6 +2,12 @@ import React, { useEffect, useState } from 'react'
 import axiosClient from '../../services/axiosClient'
 import StatCard from '../../components/common/StatCard'
 import DataTable from '../../components/common/DataTable'
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  PieChart, Pie, Cell
+} from 'recharts'
+
+const COLORS = ['#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316', '#eab308', '#64748b']
 
 const DashboardPage = () => {
   const [overview, setOverview] = useState({
@@ -23,6 +29,10 @@ const DashboardPage = () => {
   })
   const [recentImports, setRecentImports] = useState([])
   const [recentExports, setRecentExports] = useState([])
+  const [chartData, setChartData] = useState({
+    stats_7days: [],
+    category_stock: []
+  })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -31,13 +41,15 @@ const DashboardPage = () => {
       axiosClient.get('/inventory/alerts'),
       axiosClient.get('/imports'),
       axiosClient.get('/exports'),
+      axiosClient.get('/inventory/stats'),
     ])
-      .then(([dashRes, alertRes, impRes, expRes]) => {
+      .then(([dashRes, alertRes, impRes, expRes, statsRes]) => {
         setOverview(dashRes.data.overview || {})
         setThisMonth(dashRes.data.this_month || {})
         setAlerts(alertRes.data || {})
         setRecentImports((impRes.data || []).slice(0, 5))
         setRecentExports((expRes.data || []).slice(0, 5))
+        setChartData(statsRes.data || { stats_7days: [], category_stock: [] })
       })
       .catch(console.error)
       .finally(() => setLoading(false))
@@ -86,6 +98,70 @@ const DashboardPage = () => {
           Tổng tồn: <strong>{overview.total_current_stock?.toLocaleString()}</strong> sản phẩm
         </p>
       </div>
+
+      {/* Charts Section */}
+      <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Bar Chart: Import/Export last 7 days */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="mb-6 text-lg font-bold text-slate-800">Xu hướng nhập xuất (7 ngày qua)</h3>
+          <div className="h-80 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData.stats_7days}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis 
+                  dataKey="date" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{fill: '#64748b', fontSize: 12}} 
+                  dy={10} 
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{fill: '#64748b', fontSize: 12}} 
+                />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  cursor={{fill: '#f8fafc'}}
+                />
+                <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
+                <Bar name="Nhập kho" dataKey="import" fill="#06b6d4" radius={[4, 4, 0, 0]} />
+                <Bar name="Xuất kho" dataKey="export" fill="#f97316" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Pie Chart: Inventory by Category */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="mb-6 text-lg font-bold text-slate-800">Cơ cấu tồn kho theo danh mục</h3>
+          <div className="h-80 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={chartData.category_stock}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={5}
+                  dataKey="value"
+                  nameKey="name"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {chartData.category_stock.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                />
+                <Legend iconType="circle" layout="vertical" align="right" verticalAlign="middle" />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </section>
 
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         {/* Giao dịch nhập gần đây */}
