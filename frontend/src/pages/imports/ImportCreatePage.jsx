@@ -49,12 +49,27 @@ const ImportCreatePage = () => {
 
     // Tự động điền tên sản phẩm nếu nhập ID
     if (field === 'productId') {
-      const product = productOptions.find((p) => String(p.id) === String(value))
+      // Tìm kiếm theo ID
+      let product = productOptions.find((p) => String(p.id) === String(value))
+      
+      // Nếu không tìm thấy bằng ID, thử tìm chính xác theo tên sản phẩm hoặc mã (trường hợp gõ trực tiếp)
+      if (!product && value) {
+        product = productOptions.find(
+          (p) => p.name.toLowerCase() === String(value).toLowerCase() || 
+                 (p.product_code && p.product_code.toLowerCase() === String(value).toLowerCase())
+        )
+      }
+
       if (product) {
+        updated[index].productId = product.id
         updated[index].productName = product.name
         updated[index].isNewProduct = false
       } else {
         updated[index].isNewProduct = true
+        // Nếu xóa trắng ô ID thì cũng xóa trắng ô Tên sản phẩm
+        if (!value) {
+          updated[index].productName = ''
+        }
       }
     }
 
@@ -102,7 +117,7 @@ const ImportCreatePage = () => {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 gap-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-2">
-          <input
+          {/* <input
             type="text"
             required
             name="receiptCode"
@@ -110,15 +125,7 @@ const ImportCreatePage = () => {
             onChange={handleFormChange}
             placeholder="Mã phiếu nhập (VD: PN001)"
             className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
-          />
-          <input
-            type="date"
-            required
-            name="importDate"
-            value={formData.importDate}
-            onChange={handleFormChange}
-            className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
-          />
+          /> */}
           <div className="relative">
             <input
               type="text"
@@ -138,6 +145,16 @@ const ImportCreatePage = () => {
               ))}
             </datalist>
           </div>
+
+          <input
+            type="date"
+            required
+            name="importDate"
+            value={formData.importDate}
+            onChange={handleFormChange}
+            className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
+          />
+
           <input
             type="text"
             name="note"
@@ -179,7 +196,7 @@ const ImportCreatePage = () => {
                   <datalist id={`product-list-${index}`}>
                     {productOptions.map((product) => (
                       <option key={product.id} value={product.id}>
-                        {product.name}
+                        {product.id} - {product.name}
                       </option>
                     ))}
                   </datalist>

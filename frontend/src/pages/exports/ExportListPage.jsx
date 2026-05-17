@@ -21,6 +21,18 @@ const ExportListPage = () => {
     { key: 'export_date', title: 'Ngày xuất' },
     { key: 'note', title: 'Ghi chú' },
     { key: 'creator_name', title: 'Người tạo' },
+    {
+      key: 'actions',
+      title: 'Hành động',
+      render: (row) => (
+        <Link
+          to={`/exports/${row.id}`}
+          className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-cyan-50 hover:text-cyan-600 transition"
+        >
+          Chi tiết
+        </Link>
+      ),
+    },
   ]
 
   return (

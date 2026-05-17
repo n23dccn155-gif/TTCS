@@ -22,6 +22,8 @@ class ExportReceipt(db.Model):
     total_amount = db.Column(db.Numeric(15, 2), nullable=False, default=0)
     # [MỚI] Trạng thái phiếu: COMPLETED | CANCELLED
     status = db.Column(db.String(20), nullable=False, default='COMPLETED')
+    customer_name = db.Column(db.String(255))
+    delivery_address = db.Column(db.String(500))
     note = db.Column(db.Text)
     created_by = db.Column(
         db.Integer, db.ForeignKey('users.id', ondelete='RESTRICT'),
@@ -43,6 +45,8 @@ class ExportReceipt(db.Model):
             'reason': self.reason,
             'total_amount': float(self.total_amount) if self.total_amount else 0,
             'status': self.status,
+            'customer_name': self.customer_name,
+            'delivery_address': self.delivery_address,
             'note': self.note,
             'created_by': self.created_by,
             'creator_name': self.creator.full_name if self.creator else None,

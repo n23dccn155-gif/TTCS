@@ -156,7 +156,13 @@ const DashboardPage = () => {
                 <Tooltip 
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                 />
-                <Legend iconType="circle" layout="vertical" align="right" verticalAlign="middle" />
+                <Legend 
+                  iconType="circle" 
+                  layout="vertical" 
+                  align="right" 
+                  verticalAlign="top" 
+                  wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} 
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>

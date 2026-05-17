@@ -183,6 +183,8 @@ def create_export():
                 export_date=export_date,
                 reason=reason,
                 note=data.get('note'),
+                customer_name=data.get('customer_name') or data.get('customerName'),
+                delivery_address=data.get('delivery_address') or data.get('deliveryAddress'),
                 created_by=current_user_id,
                 total_amount=0,   # Sẽ tính và cập nhật sau
                 status='COMPLETED',

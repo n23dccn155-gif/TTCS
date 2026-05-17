@@ -32,6 +32,7 @@ class ExportDetail(db.Model):
             'receipt_id': self.receipt_id,
             'product_id': self.product_id,
             'product_name': self.product.name if self.product else None,
+            'product_unit': self.product.unit if self.product else None,
             'import_detail_id': self.import_detail_id,
             'batch_code': self.import_detail.batch_code if self.import_detail else None,
             'quantity': self.quantity,
