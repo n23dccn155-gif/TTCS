@@ -18,6 +18,8 @@ class ImportDetail(db.Model):
     unit_price = db.Column(db.Numeric(15, 2), nullable=False, default=0)
     batch_code = db.Column(db.String(100))
     expiry_date = db.Column(db.Date, index=True)
+    # [MỚI] Ngày sản xuất (NSX) của lô hàng
+    mfg_date = db.Column(db.Date, nullable=True)
     # [MỚI] Vị trí kệ thực tế chứa lô hàng này trong kho
     location_id = db.Column(
         db.Integer, db.ForeignKey('locations.id', ondelete='SET NULL'),
@@ -43,6 +45,7 @@ class ImportDetail(db.Model):
             'unit_price': float(self.unit_price) if self.unit_price else 0,
             'batch_code': self.batch_code,
             'expiry_date': self.expiry_date.isoformat() if self.expiry_date else None,
+            'mfg_date': self.mfg_date.isoformat() if self.mfg_date else None,
             'location_id': self.location_id,
             'location_code': self.lot_location.location_code if self.lot_location else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,

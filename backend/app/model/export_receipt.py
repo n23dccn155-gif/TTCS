@@ -3,18 +3,33 @@ from datetime import datetime
 import uuid
 
 
-def generate_export_code():
-    """Tạo mã phiếu xuất tự động dạng EXP-XXXXXXXX."""
-    return f"EXP-{uuid.uuid4().hex[:8].upper()}"
-
-
 class ExportReceipt(db.Model):
     __tablename__ = 'export_receipts'
+
+    @staticmethod
+    def generate_next_code():
+        """Tạo mã phiếu xuất tự động tuần tự dạng PX + YYMMDD + STT (3 số)."""
+        today_str = datetime.now().strftime("%y%m%d")  # Ví dụ: '260518'
+        prefix = f"PX{today_str}"
+        try:
+            latest = ExportReceipt.query.filter(
+                ExportReceipt.receipt_code.like(f"{prefix}%")
+            ).order_by(ExportReceipt.receipt_code.desc()).first()
+            
+            if latest:
+                latest_code = latest.receipt_code
+                stt = int(latest_code[-3:]) + 1
+                return f"{prefix}{stt:03d}"
+            else:
+                return f"{prefix}001"
+        except Exception:
+            import uuid
+            return f"PX{today_str}{uuid.uuid4().hex[:3].upper()}"
 
     id = db.Column(db.Integer, primary_key=True)
     receipt_code = db.Column(
         db.String(50), unique=True, nullable=False,
-        default=generate_export_code, index=True
+        default=lambda: ExportReceipt.generate_next_code(), index=True
     )
     export_date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
     reason = db.Column(db.String(50), nullable=False, default='SELL')

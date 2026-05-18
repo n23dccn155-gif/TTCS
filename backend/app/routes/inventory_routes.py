@@ -42,6 +42,34 @@ def query_view(sql: str, params: dict = None) -> list:
 
 
 # ============================================================
+# GET /api/inventory/next-import-code — LẤY MÃ PHIẾU NHẬP TIẾP THEO
+# ============================================================
+@inventory_bp.route('/next-import-code', methods=['GET'])
+@jwt_required()
+def get_next_import_code():
+    """Tạo sẵn mã phiếu nhập tiếp theo của ngày hôm nay."""
+    try:
+        next_code = ImportReceipt.generate_next_code()
+        return jsonify({'success': True, 'receipt_code': next_code}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+# ============================================================
+# GET /api/inventory/next-export-code — LẤY MÃ PHIẾU XUẤT TIẾP THEO
+# ============================================================
+@inventory_bp.route('/next-export-code', methods=['GET'])
+@jwt_required()
+def get_next_export_code():
+    """Tạo sẵn mã phiếu xuất tiếp theo của ngày hôm nay."""
+    try:
+        next_code = ExportReceipt.generate_next_code()
+        return jsonify({'success': True, 'receipt_code': next_code}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+# ============================================================
 # POST /api/inventory/imports — TẠO PHIẾU NHẬP
 # ============================================================
 @inventory_bp.route('/imports', methods=['POST'])

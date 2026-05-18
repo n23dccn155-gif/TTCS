@@ -73,6 +73,7 @@ def create():
             unit_price = item.get('unit_price') or item.get('price') or 0
             batch_code = item.get('batch_code') or item.get('batchCode')
             expiry_date_str = item.get('expiry_date') or item.get('expiryDate')
+            mfg_date_str = item.get('mfg_date') or item.get('mfgDate')
             location_id = item.get('location_id') or item.get('locationId')
 
             # Validate bắt buộc
@@ -92,21 +93,32 @@ def create():
             if not product or not product.is_active:
                 return jsonify({'error': f'Sản phẩm id={product_id} không tồn tại hoặc đã bị ẩn'}), 404
 
-            # Kiểm tra vượt tồn kho tối đa
-            if quantity + 0 > product.max_stock:
-                return jsonify({
-                    'error': f'Số lượng nhập ({quantity}) vượt tồn kho tối đa ({product.max_stock}) của sản phẩm "{product.name}"'
-                }), 400
+            # Bắt buộc có Ngày sản xuất (NSX) và Hạn sử dụng (HSD)
+            if not mfg_date_str:
+                return jsonify({'error': f'Sản phẩm "{product.name}" bắt buộc phải điền Ngày sản xuất (NSX)'}), 400
+            if not expiry_date_str:
+                return jsonify({'error': f'Sản phẩm "{product.name}" bắt buộc phải điền Hạn sử dụng (HSD)'}), 400
 
-            # Parse expiry_date
-            expiry_date = None
-            if expiry_date_str:
-                try:
-                    expiry_date = datetime.strptime(expiry_date_str, '%Y-%m-%d').date()
-                except ValueError:
-                    return jsonify({'error': f'expiry_date không đúng định dạng YYYY-MM-DD cho product_id={product_id}'}), 400
+            # Parse ngày sản xuất
+            try:
+                mfg_date = datetime.strptime(mfg_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                return jsonify({'error': f'Ngày sản xuất không đúng định dạng YYYY-MM-DD cho sản phẩm "{product.name}"'}), 400
 
-            # Kiểm tra location nếu có
+            # Parse hạn sử dụng
+            try:
+                expiry_date = datetime.strptime(expiry_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                return jsonify({'error': f'Hạn sử dụng không đúng định dạng YYYY-MM-DD cho sản phẩm "{product.name}"'}), 400
+
+            # Kiểm tra ngày hợp lệ
+            if mfg_date > datetime.utcnow().date():
+                return jsonify({'error': f'Ngày sản xuất của sản phẩm "{product.name}" không thể nằm ở tương lai'}), 400
+            if mfg_date >= expiry_date:
+                return jsonify({'error': f'Ngày sản xuất phải nhỏ hơn Hạn sử dụng cho sản phẩm "{product.name}"'}), 400
+
+            # Logic Xếp kệ & Kiểm tra sức chứa
+            location_obj = None
             if location_id:
                 try:
                     location_id = int(location_id)
@@ -115,11 +127,43 @@ def create():
                 loc = Location.query.get(location_id)
                 if not loc or not loc.is_active:
                     return jsonify({'error': f'Vị trí kệ id={location_id} không tồn tại'}), 404
+                
+                # Kiểm tra phân khu kệ có khớp danh mục sản phẩm không
+                if loc.zone != product.category:
+                    return jsonify({
+                        'error': f'Kệ "{loc.location_code}" thuộc phân khu "{loc.zone}", không thể chứa sản phẩm "{product.name}" thuộc danh mục "{product.category}"'
+                    }), 400
+                
                 if loc.available_capacity < quantity:
                     return jsonify({
-                        'error': f'Kệ "{loc.location_code}" không đủ sức chứa. '
-                                 f'Còn trống: {loc.available_capacity}, Cần cất: {quantity}'
+                        'error': f'Kệ "{loc.location_code}" không đủ sức chứa. Còn trống: {loc.available_capacity}, Cần cất: {quantity}'
                     }), 400
+                location_obj = loc
+            else:
+                # TỰ ĐỘNG XẾP KỆ (Auto-slotting Best-Fit)
+                # Tìm các kệ active thuộc phân khu tương ứng danh mục sản phẩm
+                locations_in_zone = Location.query.filter(
+                    Location.zone == product.category,
+                    Location.is_active == True
+                ).all()
+                
+                if not locations_in_zone:
+                    return jsonify({
+                        'error': f'Phân khu "{product.category}" chưa có kệ hàng nào được tạo hoặc đang bị ẩn. Vui lòng liên hệ Admin.'
+                    }), 400
+                
+                # Tìm các kệ có đủ sức chứa trống
+                fitting_locations = [l for l in locations_in_zone if l.available_capacity >= quantity]
+                if not fitting_locations:
+                    total_free = sum(l.available_capacity for l in locations_in_zone)
+                    return jsonify({
+                        'error': f'Phân khu "{product.category}" không còn kệ nào đủ sức chứa trống cho {quantity} sản phẩm "{product.name}" (Tổng dung tích trống cả khu là {total_free}).'
+                    }), 400
+                
+                # Chọn kệ có sẵn dung tích nhỏ nhất nhưng vẫn chứa đủ (Best-Fit)
+                fitting_locations.sort(key=lambda l: l.available_capacity)
+                location_obj = fitting_locations[0]
+                location_id = location_obj.id
 
             total_amount += quantity * unit_price
             validated_items.append({
@@ -128,8 +172,9 @@ def create():
                 'unit_price': unit_price,
                 'batch_code': batch_code,
                 'expiry_date': expiry_date,
+                'mfg_date': mfg_date,
                 'location_id': location_id,
-                'location_obj': Location.query.get(location_id) if location_id else None,
+                'location_obj': location_obj,
             })
 
         # Tạo phiếu nhập
@@ -153,6 +198,7 @@ def create():
                 unit_price=item_data['unit_price'],
                 batch_code=item_data['batch_code'],
                 expiry_date=item_data['expiry_date'],
+                mfg_date=item_data['mfg_date'],
                 location_id=item_data['location_id'],
             )
             db.session.add(detail)

@@ -53,30 +53,46 @@ def _seed_data():
     from app.model.user import User
     from app.model.location import Location
 
-    if not User.query.first():
-        from werkzeug.security import generate_password_hash
-        admin = User(
-            username='admin',
-            full_name='Quản trị viên',
-            email='admin@warehouse.local',
-            password_hash=generate_password_hash('123456'),
-            role='admin',
-            is_active=True
-        )
-        db.session.add(admin)
+    try:
+        if not User.query.first():
+            from werkzeug.security import generate_password_hash
+            admin = User(
+                username='admin',
+                full_name='Quản trị viên',
+                email='admin@warehouse.local',
+                password_hash=generate_password_hash('123456'),
+                role='admin',
+                is_active=True
+            )
+            db.session.add(admin)
 
-    # Seed 5 vị trí kệ kho mẫu nếu chưa có
-    if not Location.query.first():
-        sample_locations = [
-            Location(location_code='A1-01', name='Kệ A1 - Tầng 1', max_capacity=500),
-            Location(location_code='A1-02', name='Kệ A1 - Tầng 2', max_capacity=500),
-            Location(location_code='B2-01', name='Kệ B2 - Tầng 1', max_capacity=800),
-            Location(location_code='B2-02', name='Kệ B2 - Tầng 2', max_capacity=800),
-            Location(location_code='C3-01', name='Kệ C3 - Hàng cồng kềnh', max_capacity=200),
-        ]
-        db.session.add_all(sample_locations)
+            # Seed các vị trí kệ kho mẫu theo đúng sơ đồ phân khu thực tế
+        if not Location.query.first():
+            sample_locations = [
+                # 1. Khu Thực phẩm tươi sống
+                Location(location_code='TPTS-A', name='Kệ A - Tươi sống', zone='Thực phẩm tươi sống', max_capacity=500),
+                Location(location_code='TPTS-B', name='Kệ B - Tươi sống', zone='Thực phẩm tươi sống', max_capacity=500),
+                
+                # 2. Khu Thực phẩm khô và Nhu yếu phẩm
+                Location(location_code='TPK-NYP-A', name='Kệ A - Thực phẩm khô', zone='Thực phẩm khô và Nhu yếu phẩm', max_capacity=1000),
+                Location(location_code='TPK-NYP-B', name='Kệ B - Nhu yếu phẩm', zone='Thực phẩm khô và Nhu yếu phẩm', max_capacity=1000),
+                
+                # 3. Khu Đồ uống và bánh kẹo
+                Location(location_code='DUBK-A', name='Kệ A - Đồ uống & Bánh kẹo', zone='Đồ uống và bánh kẹo', max_capacity=800),
+                Location(location_code='DUBK-B', name='Kệ B - Đồ uống & Bánh kẹo', zone='Đồ uống và bánh kẹo', max_capacity=800),
+                
+                # 4. Khu Hóa mỹ phẩm
+                Location(location_code='HMP-A', name='Kệ A - Hóa mỹ phẩm', zone='Hóa mỹ phẩm', max_capacity=600),
+                
+                # 5. Khu Đồ dùng gia đình
+                Location(location_code='DDGD-A', name='Kệ A - Đồ dùng gia đình', zone='Đồ dùng gia đình', max_capacity=700),
+            ]
+            db.session.add_all(sample_locations)
 
-    db.session.commit()
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"[WARNING] Could not seed data (this is normal during migrations): {e}")
 
 
 def _create_views():

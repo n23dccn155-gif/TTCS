@@ -25,6 +25,50 @@ def _sync_suppliers(product, supplier_ids):
     product.suppliers = suppliers
 
 
+@bp.route('/check-duplicate', methods=['GET'])
+@jwt_required()
+def check_duplicate():
+    """
+    API kiểm tra trùng dữ liệu sản phẩm tức thì.
+    Query params:
+      - product_code: Mã cần check
+      - name: Tên cần check
+      - exclude_id: ID loại trừ (dùng khi cập nhật sản phẩm)
+    """
+    product_code = request.args.get('product_code')
+    name = request.args.get('name')
+    exclude_id = request.args.get('exclude_id', type=int)
+
+    if not product_code and not name:
+        return jsonify({'success': True, 'exists': False}), 200
+
+    query = Product.query.filter(Product.is_active == True)
+    if exclude_id:
+        query = query.filter(Product.id != exclude_id)
+
+    if product_code:
+        prod_by_code = query.filter(Product.product_code == product_code.strip()).first()
+        if prod_by_code:
+            return jsonify({
+                'success': True,
+                'exists': True,
+                'field': 'product_code',
+                'message': f'Mã sản phẩm "{product_code}" đã tồn tại trên hệ thống.'
+            }), 200
+
+    if name:
+        prod_by_name = query.filter(Product.name == name.strip()).first()
+        if prod_by_name:
+            return jsonify({
+                'success': True,
+                'exists': True,
+                'field': 'name',
+                'message': f'Tên sản phẩm "{name}" đã tồn tại trên hệ thống.'
+            }), 200
+
+    return jsonify({'success': True, 'exists': False}), 200
+
+
 @bp.route('', methods=['GET'])
 @jwt_required()
 def get_all():

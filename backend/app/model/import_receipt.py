@@ -3,18 +3,33 @@ from datetime import datetime
 import uuid
 
 
-def generate_receipt_code():
-    """Tạo mã phiếu nhập tự động dạng IMP-XXXXXXXX."""
-    return f"IMP-{uuid.uuid4().hex[:8].upper()}"
-
-
 class ImportReceipt(db.Model):
     __tablename__ = 'import_receipts'
+
+    @staticmethod
+    def generate_next_code():
+        """Tạo mã phiếu nhập tự động tuần tự dạng PN + YYMMDD + STT (3 số)."""
+        today_str = datetime.now().strftime("%y%m%d")  # Ví dụ: '260518'
+        prefix = f"PN{today_str}"
+        try:
+            latest = ImportReceipt.query.filter(
+                ImportReceipt.receipt_code.like(f"{prefix}%")
+            ).order_by(ImportReceipt.receipt_code.desc()).first()
+            
+            if latest:
+                latest_code = latest.receipt_code
+                stt = int(latest_code[-3:]) + 1
+                return f"{prefix}{stt:03d}"
+            else:
+                return f"{prefix}001"
+        except Exception:
+            import uuid
+            return f"PN{today_str}{uuid.uuid4().hex[:3].upper()}"
 
     id = db.Column(db.Integer, primary_key=True)
     receipt_code = db.Column(
         db.String(50), unique=True, nullable=False,
-        default=generate_receipt_code, index=True
+        default=lambda: ImportReceipt.generate_next_code(), index=True
     )
     import_date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
     supplier_id = db.Column(

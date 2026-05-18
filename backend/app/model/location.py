@@ -13,6 +13,8 @@ class Location(db.Model):
     location_code = db.Column(db.String(50), unique=True, nullable=False, index=True)
     # Ví dụ: "A1-01", "B2-05", "Kệ C tầng 3"
     name = db.Column(db.String(200), nullable=False)
+    # Phân khu lưu trữ: "Thực phẩm tươi sống", "Thực phẩm khô và Nhu yếu phẩm", "Đồ uống và bánh kẹo", "Hóa mỹ phẩm", "Đồ dùng gia đình"
+    zone = db.Column(db.String(100), nullable=False, default="Thực phẩm khô và Nhu yếu phẩm")
     # Sức chứa tối đa (tính theo đơn vị sản phẩm/hộp/thùng)
     max_capacity = db.Column(db.Integer, nullable=False, default=1000)
     # Số lượng hiện đang chiếm dụng (cập nhật tự động khi nhập/xuất kho)
@@ -39,6 +41,7 @@ class Location(db.Model):
             'id': self.id,
             'location_code': self.location_code,
             'name': self.name,
+            'zone': self.zone,
             'max_capacity': self.max_capacity,
             'current_occupied': self.current_occupied,
             'available_capacity': self.available_capacity,
