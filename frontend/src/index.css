@@ -1,1 +1,74 @@
 @import "tailwindcss";
+
+/* ===== DARK MODE OVERRIDES ===== */
+.dark body, .dark .min-h-screen, .dark .page-wrapper {
+  background-color: #0f172a !important; /* slate-900 */
+  color: #f8fafc !important; /* slate-50 */
+}
+.dark .bg-white, .dark .card, .dark .bg-slate-50, .dark .profile-card, .dark .table-card, .dark .hero-strip, .dark .filter-bar, .dark .modern-table, .dark .empty-state-card {
+  background-color: #1e293b !important; /* slate-800 */
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+.dark header, .dark .top-header, .dark .bg-white\/90, .dark .modal-content {
+  background-color: rgba(30, 41, 59, 0.95) !important;
+  border-color: #334155 !important;
+}
+.dark .text-slate-900, .dark .text-gray-900, .dark .text-slate-800, .dark h1, .dark h2, .dark h3, .dark th, .dark td {
+  color: #f8fafc !important;
+}
+.dark .text-slate-500, .dark .text-gray-500, .dark .text-gray-600, .dark .text-gray-700, .dark p {
+  color: #94a3b8 !important; /* slate-400 */
+}
+.dark .border-slate-200, .dark .border-gray-200, .dark .border-gray-100, .dark border-b, .dark .border, .dark td, .dark th {
+  border-color: #334155 !important; /* slate-700 */
+}
+.dark input, .dark select, .dark textarea {
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+.dark .modern-table th {
+  background-color: #0f172a !important;
+}
+.dark .modern-table tr:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+.dark .bg-blue-50, .dark .bg-cyan-50, .dark .bg-green-50, .dark .bg-red-50, .dark .bg-amber-50, .dark .bg-orange-50 {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+.dark .shadow-sm, .dark .shadow-md, .dark .shadow-lg, .dark .shadow-xl {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-container, .print-container * {
+    visibility: visible;
+  }
+  .print-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: #fff !important;
+    color: #000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  tr {
+    page-break-inside: avoid;
+  }
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  aside, header, nav, button, .no-print {
+    display: none !important;
+  }
+}

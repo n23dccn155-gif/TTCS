@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import exportService from '../../services/exportService'
 import PageHeader from '../../components/common/PageHeader'
 import DataTable from '../../components/common/DataTable'
+import { FileSpreadsheet } from 'lucide-react'
+import { exportToExcel } from '../../utils/exportUtils'
 
 const ExportListPage = () => {
   const [exportsData, setExportsData] = useState([])
@@ -14,6 +16,17 @@ const ExportListPage = () => {
     }
     fetchData()
   }, [])
+
+  const handleExport = () => {
+    const formattedData = exportsData.map(item => ({
+      'Mã phiếu xuất': item.receipt_code,
+      'Lý do xuất': item.reason,
+      'Ngày xuất': item.export_date,
+      'Ghi chú': item.note,
+      'Người tạo': item.creator_name
+    }))
+    exportToExcel(formattedData, 'Danh_Sach_Phieu_Xuat')
+  }
 
   const columns = [
     { key: 'receipt_code', title: 'Mã phiếu xuất' },
@@ -41,12 +54,22 @@ const ExportListPage = () => {
         title="Danh sách phiếu xuất"
         description="Theo dõi tất cả phiếu xuất kho"
         action={
-          <Link
-            to="/exports/create"
-            className="rounded-xl bg-cyan-500 px-4 py-3 text-sm font-semibold text-white hover:bg-cyan-600"
-          >
-            + Tạo phiếu xuất
-          </Link>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleExport}
+              disabled={exportsData.length === 0}
+              className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-emerald-100 hover:bg-emerald-700 transition disabled:opacity-50 disabled:shadow-none"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Xuất Excel
+            </button>
+            <Link
+              to="/exports/create"
+              className="rounded-xl bg-cyan-500 px-4 py-3 text-sm font-semibold text-white hover:bg-cyan-600 whitespace-nowrap"
+            >
+              + Tạo phiếu xuất
+            </Link>
+          </div>
         }
       />
       <DataTable columns={columns} data={exportsData} />
@@ -55,3 +78,4 @@ const ExportListPage = () => {
 }
 
 export default ExportListPage
+

@@ -6,7 +6,8 @@ import productService from '../../services/productService'
 import locationService from '../../services/locationService'
 import supplierService from '../../services/supplierService'
 import { useAuth } from '../../contexts/AuthContext'
-import { X, Edit2, Trash2, ShieldAlert, ArrowUpDown, Package, LayoutGrid } from 'lucide-react'
+import { X, Edit2, Trash2, ShieldAlert, ArrowUpDown, Package, LayoutGrid, FileSpreadsheet } from 'lucide-react'
+import { exportToExcel } from '../../utils/exportUtils'
 
 const ProductListPage = () => {
   const { user } = useAuth()
@@ -19,6 +20,32 @@ const ProductListPage = () => {
   const [loading, setLoading] = useState(false)
   const [sortBy, setSortBy] = useState('id')
   const [activeTab, setActiveTab] = useState('products')
+
+  const handleExport = () => {
+    if (activeTab === 'products') {
+      const formattedData = filteredProducts.map(item => ({
+        'Mã SP': item.product_code,
+        'Tên sản phẩm': item.name,
+        'Danh mục': item.category,
+        'Đơn vị': item.unit,
+        'Đơn giá': item.unit_price,
+        'Min Stock': item.min_stock,
+        'Max Stock': item.max_stock,
+        'Tồn thực tế': item.current_stock || 0
+      }))
+      exportToExcel(formattedData, 'Danh_Sach_San_Pham')
+    } else {
+      const formattedData = locations.map(item => ({
+        'Mã kệ': item.location_code,
+        'Tên kệ': item.name,
+        'Sức chứa tối đa': item.max_capacity,
+        'Đã sử dụng': item.current_occupied,
+        'Còn trống': item.available_capacity,
+        'Mô tả': item.description
+      }))
+      exportToExcel(formattedData, 'Danh_Sach_Ke_Kho')
+    }
+  }
 
   // Modals state
   const [isCreateOpen, setIsCreateOpen] = useState(false)
@@ -269,19 +296,29 @@ const ProductListPage = () => {
         title="Danh sách sản phẩm"
         description="Quản lý danh mục hàng hóa trong kho hàng"
         action={
-          isAdmin ? (
-            <button 
-              onClick={() => { resetForm(); setIsCreateOpen(true); }}
-              className="rounded-xl bg-cyan-500 px-4 py-3 text-sm font-semibold text-white hover:bg-cyan-600 transition shadow-sm shadow-cyan-100"
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleExport}
+              disabled={activeTab === 'products' ? filteredProducts.length === 0 : locations.length === 0}
+              className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-emerald-100 hover:bg-emerald-700 transition disabled:opacity-50 disabled:shadow-none"
             >
-              + Thêm sản phẩm
+              <FileSpreadsheet className="h-4 w-4" />
+              Xuất Excel
             </button>
-          ) : (
-            <div className="flex items-center gap-1.5 text-xs text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
-              <ShieldAlert className="h-4 w-4 text-amber-500" />
-              Chỉ Admin mới có quyền Thêm/Sửa/Xóa
-            </div>
-          )
+            {isAdmin ? (
+              <button 
+                onClick={() => { resetForm(); setIsCreateOpen(true); }}
+                className="rounded-xl bg-cyan-500 px-4 py-3 text-sm font-semibold text-white hover:bg-cyan-600 transition shadow-sm shadow-cyan-100 whitespace-nowrap"
+              >
+                + Thêm sản phẩm
+              </button>
+            ) : (
+              <div className="flex items-center gap-1.5 text-xs text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+                <ShieldAlert className="h-4 w-4 text-amber-500" />
+                Chỉ Admin mới có quyền Thêm/Sửa/Xóa
+              </div>
+            )}
+          </div>
         }
       />
 
