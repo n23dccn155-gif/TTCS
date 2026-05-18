@@ -5,7 +5,8 @@ import supplierService from '../../services/supplierService'
 import locationService from '../../services/locationService'
 
 const ImportCreatePage = () => {
-  const [productOptions, setProductOptions] = useState([])
+  const [allProducts, setAllProducts] = useState([])        // toàn bộ sản phẩm
+  const [productOptions, setProductOptions] = useState([])  // sản phẩm đã lọc theo NCC
   const [supplierOptions, setSupplierOptions] = useState([])
   const [locationOptions, setLocationOptions] = useState([])
   
@@ -21,7 +22,6 @@ const ImportCreatePage = () => {
   ])
 
   useEffect(() => {
-    // Fetch danh sách sản phẩm, nhà cung cấp và vị trí kệ từ DB
     const fetchOptions = async () => {
       try {
         const [prodRes, supRes, locRes] = await Promise.all([
@@ -29,7 +29,8 @@ const ImportCreatePage = () => {
           supplierService.getAll(),
           locationService.getAvailable()
         ])
-        setProductOptions(prodRes.data)
+        setAllProducts(prodRes.data)
+        setProductOptions(prodRes.data)  // mặc định hiện tất cả
         setSupplierOptions(supRes.data)
         setLocationOptions(locRes.data)
       } catch (error) {
@@ -40,7 +41,21 @@ const ImportCreatePage = () => {
   }, [])
 
   const handleFormChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
+
+    // Khi chọn nhà cung cấp, lọc danh sách sản phẩm
+    if (name === 'supplierId') {
+      if (value) {
+        const sid = parseInt(value)
+        const filtered = allProducts.filter(p => p.supplier_ids && p.supplier_ids.includes(sid))
+        setProductOptions(filtered.length > 0 ? filtered : allProducts)
+      } else {
+        setProductOptions(allProducts)
+      }
+      // Reset item sản phẩm khi đổi NCC
+      setItems([{ productId: '', productName: '', quantity: '', price: '', totalAmount: 0, expiryDate: '', locationId: '', isNewProduct: true }])
+    }
   }
 
   const handleItemChange = (index, field, value) => {
@@ -49,12 +64,27 @@ const ImportCreatePage = () => {
 
     // Tự động điền tên sản phẩm nếu nhập ID
     if (field === 'productId') {
-      const product = productOptions.find((p) => String(p.id) === String(value))
+      // Tìm kiếm theo ID
+      let product = productOptions.find((p) => String(p.id) === String(value))
+      
+      // Nếu không tìm thấy bằng ID, thử tìm chính xác theo tên sản phẩm hoặc mã (trường hợp gõ trực tiếp)
+      if (!product && value) {
+        product = productOptions.find(
+          (p) => p.name.toLowerCase() === String(value).toLowerCase() || 
+                 (p.product_code && p.product_code.toLowerCase() === String(value).toLowerCase())
+        )
+      }
+
       if (product) {
+        updated[index].productId = product.id
         updated[index].productName = product.name
         updated[index].isNewProduct = false
       } else {
         updated[index].isNewProduct = true
+        // Nếu xóa trắng ô ID thì cũng xóa trắng ô Tên sản phẩm
+        if (!value) {
+          updated[index].productName = ''
+        }
       }
     }
 
@@ -102,7 +132,7 @@ const ImportCreatePage = () => {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 gap-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-2">
-          <input
+          {/* <input
             type="text"
             required
             name="receiptCode"
@@ -110,15 +140,7 @@ const ImportCreatePage = () => {
             onChange={handleFormChange}
             placeholder="Mã phiếu nhập (VD: PN001)"
             className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
-          />
-          <input
-            type="date"
-            required
-            name="importDate"
-            value={formData.importDate}
-            onChange={handleFormChange}
-            className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
-          />
+          /> */}
           <div className="relative">
             <input
               type="text"
@@ -138,6 +160,16 @@ const ImportCreatePage = () => {
               ))}
             </datalist>
           </div>
+
+          <input
+            type="date"
+            required
+            name="importDate"
+            value={formData.importDate}
+            onChange={handleFormChange}
+            className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
+          />
+
           <input
             type="text"
             name="note"
@@ -179,7 +211,7 @@ const ImportCreatePage = () => {
                   <datalist id={`product-list-${index}`}>
                     {productOptions.map((product) => (
                       <option key={product.id} value={product.id}>
-                        {product.name}
+                        {product.id} - {product.name}
                       </option>
                     ))}
                   </datalist>

@@ -10,8 +10,10 @@ import SupplierListPage from '../pages/suppliers/SupplierListPage'
 import UserListPage from '../pages/users/UserListPage'
 import ImportListPage from '../pages/imports/ImportListPage'
 import ImportCreatePage from '../pages/imports/ImportCreatePage'
+import ImportDetailPage from '../pages/imports/ImportDetailPage'
 import ExportListPage from '../pages/exports/ExportListPage'
 import ExportCreatePage from '../pages/exports/ExportCreatePage'
+import ExportDetailPage from '../pages/exports/ExportDetailPage'
 import InventoryPage from '../pages/inventory/InventoryPage'
 import AlertsPage from '../pages/alert/AlertsPage'
 import NotFoundPage from '../pages/errors/NotFoundPage'
@@ -41,8 +43,10 @@ export const router = createBrowserRouter([
       { path: 'users', element: <UserListPage /> },
       { path: 'imports', element: <ImportListPage /> },
       { path: 'imports/create', element: <ImportCreatePage /> },
+      { path: 'imports/:id', element: <ImportDetailPage /> },
       { path: 'exports', element: <ExportListPage /> },
       { path: 'exports/create', element: <ExportCreatePage /> },
+      { path: 'exports/:id', element: <ExportDetailPage /> },
       { path: 'inventory', element: <InventoryPage /> },
       { path: 'alerts', element: <AlertsPage /> },
       { path: '403', element: <ForbiddenPage /> },

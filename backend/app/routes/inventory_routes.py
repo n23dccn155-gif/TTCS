@@ -183,6 +183,8 @@ def create_export():
                 export_date=export_date,
                 reason=reason,
                 note=data.get('note'),
+                customer_name=data.get('customer_name') or data.get('customerName'),
+                delivery_address=data.get('delivery_address') or data.get('deliveryAddress'),
                 created_by=current_user_id,
                 total_amount=0,   # Sẽ tính và cập nhật sau
                 status='COMPLETED',
@@ -594,4 +596,77 @@ def get_bell_notifications():
         "alerts_count": total_alerts,
         "alerts": alerts_preview,
         "activities": activities_preview
+    }), 200
+
+
+# ============================================================
+# GET /api/inventory/stats — DỮ LIỆU BIỂU ĐỒ DASHBOARD
+# ============================================================
+@inventory_bp.route('/stats', methods=['GET'])
+@jwt_required()
+def get_stats():
+    """
+    Thống kê cho biểu đồ Dashboard:
+      1. Số lượng nhập/xuất 7 ngày qua (biểu đồ cột)
+      2. Tồn kho theo danh mục (biểu đồ tròn)
+    """
+    # 1. Lấy dữ liệu 7 ngày qua
+    days = []
+    today = date.today()
+    for i in range(6, -1, -1):
+        d = today - timedelta(days=i)
+        days.append(d)
+
+    stats_7days = []
+    for d in days:
+        # Nhập: SUM(quantity) của ImportDetails trong ngày d
+        imp_res = query_view(
+            """
+            SELECT COALESCE(SUM(id.quantity), 0) as qty
+            FROM import_details id
+            JOIN import_receipts ir ON ir.id = id.receipt_id
+            WHERE ir.import_date = :d
+            """,
+            {'d': d}
+        )
+        
+        # Xuất: SUM(quantity) của ExportDetails trong ngày d
+        exp_res = query_view(
+            """
+            SELECT COALESCE(SUM(ed.quantity), 0) as qty
+            FROM export_details ed
+            JOIN export_receipts er ON er.id = ed.receipt_id
+            WHERE er.export_date = :d
+            """,
+            {'d': d}
+        )
+        
+        stats_7days.append({
+            'date': d.strftime('%d/%m'),
+            'import': int(imp_res[0]['qty']),
+            'export': int(exp_res[0]['qty'])
+        })
+
+    # 2. Lấy tồn kho theo danh mục
+    category_stock_raw = query_view(
+        """
+        SELECT 
+            COALESCE(category, 'Chưa phân loại') as name,
+            COALESCE(SUM(current_stock), 0) as value
+        FROM v_stock_balance
+        GROUP BY category
+        ORDER BY value DESC
+        """
+    )
+    
+    category_stock = []
+    for row in category_stock_raw:
+        category_stock.append({
+            'name': row['name'],
+            'value': float(row['value'])
+        })
+
+    return jsonify({
+        'stats_7days': stats_7days,
+        'category_stock': category_stock
     }), 200

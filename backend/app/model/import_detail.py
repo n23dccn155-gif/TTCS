@@ -38,6 +38,7 @@ class ImportDetail(db.Model):
             'product_id': self.product_id,
             'product_name': self.product.name if self.product else None,
             'product_code': self.product.product_code if self.product else None,
+            'product_unit': self.product.unit if self.product else None,
             'quantity': self.quantity,
             'unit_price': float(self.unit_price) if self.unit_price else 0,
             'batch_code': self.batch_code,

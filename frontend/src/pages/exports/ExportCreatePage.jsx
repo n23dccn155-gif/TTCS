@@ -9,10 +9,11 @@ const ExportCreatePage = () => {
     receiptCode: '',
     exportDate: '',
     customerName: '',
+    deliveryAddress: '',
     note: '',
   })
 
-  const [items, setItems] = useState([{ productId: '', quantity: '', price: '', totalAmount: 0 }])
+  const [items, setItems] = useState([{ productId: '', productName: '', quantity: '', sellingPrice: '', totalAmount: 0 }])
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -34,10 +35,28 @@ const ExportCreatePage = () => {
     const updated = [...items]
     updated[index][field] = value
 
+    if (field === 'productId') {
+      let product = productOptions.find((p) => String(p.id) === String(value))
+      
+      if (!product && value) {
+        product = productOptions.find(
+          (p) => p.name.toLowerCase() === String(value).toLowerCase() || 
+                 (p.product_code && p.product_code.toLowerCase() === String(value).toLowerCase())
+        )
+      }
+
+      if (product) {
+        updated[index].productId = product.id
+        updated[index].productName = product.name
+      } else if (!value) {
+        updated[index].productName = ''
+      }
+    }
+
     // Tính thành tiền
-    if (field === 'quantity' || field === 'price') {
+    if (field === 'quantity' || field === 'sellingPrice') {
       const qty = parseFloat(updated[index].quantity) || 0
-      const prc = parseFloat(updated[index].price) || 0
+      const prc = parseFloat(updated[index].sellingPrice) || 0
       updated[index].totalAmount = qty * prc
     }
 
@@ -45,7 +64,7 @@ const ExportCreatePage = () => {
   }
 
   const addRow = () => {
-    setItems([...items, { productId: '', quantity: '', price: '', totalAmount: 0 }])
+    setItems([...items, { productId: '', productName: '', quantity: '', sellingPrice: '', totalAmount: 0 }])
   }
 
   const removeRow = (index) => {
@@ -57,8 +76,8 @@ const ExportCreatePage = () => {
     try {
       await exportService.create({ ...formData, items })
       alert('Tạo phiếu xuất thành công!')
-      setFormData({ receiptCode: '', exportDate: '', customerName: '', note: '' })
-      setItems([{ productId: '', quantity: '', price: '', totalAmount: 0 }])
+      setFormData({ receiptCode: '', exportDate: '', customerName: '', deliveryAddress: '', note: '' })
+      setItems([{ productId: '', productName: '', quantity: '', sellingPrice: '', totalAmount: 0 }])
     } catch (error) {
       alert(error.response?.data?.message || 'Lỗi khi tạo phiếu xuất')
     }
@@ -102,6 +121,14 @@ const ExportCreatePage = () => {
           />
           <input
             type="text"
+            name="deliveryAddress"
+            value={formData.deliveryAddress}
+            onChange={handleFormChange}
+            placeholder="Địa chỉ nhận hàng"
+            className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
+          />
+          <input
+            type="text"
             name="note"
             value={formData.note}
             onChange={handleFormChange}
@@ -126,21 +153,34 @@ const ExportCreatePage = () => {
             {items.map((item, index) => (
               <div
                 key={index}
-                className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-5 items-end"
+                className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-6 items-end"
               >
-                <select
-                  required
-                  value={item.productId}
-                  onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
-                  className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-cyan-500"
-                >
-                  <option value="">Chọn sản phẩm</option>
-                  {productOptions.map((product) => (
-                    <option key={product.id} value={product.id}>
-                      {product.name} ({product.product_code}) - Tồn: {product.current_stock || 0}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <input
+                    type="text"
+                    required
+                    list={`export-product-list-${index}`}
+                    placeholder="Nhập ID"
+                    value={item.productId}
+                    onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-cyan-500"
+                  />
+                  <datalist id={`export-product-list-${index}`}>
+                    {productOptions.map((product) => (
+                      <option key={product.id} value={product.id}>
+                        {product.id} - {product.name} (Tồn: {product.current_stock || 0})
+                      </option>
+                    ))}
+                  </datalist>
+                </div>
+
+                <input
+                  type="text"
+                  placeholder="Tên sản phẩm"
+                  readOnly
+                  value={item.productName || ''}
+                  className="rounded-xl border border-slate-300 bg-slate-100 text-slate-500 cursor-not-allowed px-4 py-3 outline-none"
+                />
 
                 <input
                   type="number"
@@ -157,8 +197,8 @@ const ExportCreatePage = () => {
                   min="0"
                   step="1000"
                   placeholder="Đơn giá xuất"
-                  value={item.price}
-                  onChange={(e) => handleItemChange(index, 'price', e.target.value)}
+                  value={item.sellingPrice}
+                  onChange={(e) => handleItemChange(index, 'sellingPrice', e.target.value)}
                   className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-cyan-500"
                 />
 

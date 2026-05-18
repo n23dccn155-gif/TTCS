@@ -51,7 +51,7 @@ const InventoryPage = () => {
     <div className="space-y-6">
       <PageHeader
         title="Tồn kho hiện tại"
-        description="Hiển thị số lượng tồn của từng sản phẩm (tính từ PostgreSQL View real-time)"
+        description="Hiển thị số lượng tồn của từng sản phẩm"
       />
       {loading ? (
         <div className="flex h-48 items-center justify-center rounded-2xl border border-slate-200 bg-white">

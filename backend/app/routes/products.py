@@ -10,10 +10,33 @@ from sqlalchemy import text
 bp = Blueprint('products', __name__)
 
 
+def _sync_suppliers(product, supplier_ids):
+    """Helper: đồng bộ danh sách nhà cung cấp cho sản phẩm."""
+    if supplier_ids is None:
+        return
+    # Chuyển về list int
+    ids = []
+    for sid in supplier_ids:
+        try:
+            ids.append(int(sid))
+        except (ValueError, TypeError):
+            pass
+    suppliers = Supplier.query.filter(Supplier.id.in_(ids), Supplier.is_active == True).all() if ids else []
+    product.suppliers = suppliers
+
+
 @bp.route('', methods=['GET'])
 @jwt_required()
 def get_all():
-    products = Product.query.filter_by(is_active=True).order_by(Product.product_code).all()
+    supplier_id = request.args.get('supplier_id', type=int)
+
+    if supplier_id:
+        supplier = Supplier.query.get_or_404(supplier_id)
+        products = [p for p in supplier.products if p.is_active]
+        products.sort(key=lambda p: p.product_code)
+    else:
+        products = Product.query.filter_by(is_active=True).order_by(Product.product_code).all()
+
     try:
         balances = db.session.execute(
             text("SELECT product_id, current_stock FROM v_stock_balance")
@@ -27,7 +50,6 @@ def get_all():
         d = p.to_dict()
         current_stock = stock_map.get(p.id, 0)
         d['current_stock'] = current_stock
-        # Cảnh báo tồn kho thấp / vượt tối đa
         d['is_low_stock'] = current_stock < p.min_stock
         d['is_over_stock'] = current_stock > p.max_stock
         result.append(d)
@@ -86,6 +108,9 @@ def create():
         is_active=True,
     )
     db.session.add(product)
+    db.session.flush()  # Lấy product.id trước khi gán suppliers
+
+    _sync_suppliers(product, data.get('supplier_ids', []))
     db.session.commit()
     return jsonify(product.to_dict()), 201
 
@@ -121,6 +146,10 @@ def update(id):
     product.max_stock = int(data.get('max_stock', product.max_stock))
     product.unit_price = unit_price
     product.location_id = location_id
+
+    if 'supplier_ids' in data:
+        _sync_suppliers(product, data['supplier_ids'])
+
     db.session.commit()
     return jsonify(product.to_dict()), 200
 
