@@ -31,7 +31,7 @@ class ImportDetail(db.Model):
         'ExportDetail', backref='import_detail', lazy=True
     )
     # Quan hệ tới vị trí kệ chứa lô hàng này
-    lot_location = db.relationship('Location', foreign_keys=[location_id])
+    lot_location = db.relationship('Location', foreign_keys=[location_id], overlaps="import_details,location")
 
     def to_dict(self):
         return {

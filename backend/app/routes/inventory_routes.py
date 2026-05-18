@@ -698,3 +698,119 @@ def get_stats():
         'stats_7days': stats_7days,
         'category_stock': category_stock
     }), 200
+
+
+# ============================================================
+# GET /api/inventory/replenishments/suggestions — ĐỀ XUẤT PHIẾU NHẬP TỰ ĐỘNG
+# ============================================================
+@inventory_bp.route('/replenishments/suggestions', methods=['GET'])
+@jwt_required()
+def get_replenishment_suggestions():
+    """
+    Tự động quét toàn bộ sản phẩm tồn thấp (current_stock < min_stock).
+    Duyệt tìm nhà cung cấp có đơn giá hợp đồng rẻ nhất cho sản phẩm đó.
+    Tính toán số lượng gợi ý: suggested_qty = min_stock * 2 - current_stock.
+    Trả về danh sách gợi ý mua hàng được gom nhóm theo nhà cung cấp.
+    """
+    try:
+        # 1. Lấy tất cả sản phẩm đang bị tồn kho thấp từ View
+        low_stock_products = query_view(
+            """
+            SELECT product_id, product_code, product_name, unit, category, current_stock, min_stock
+            FROM v_stock_balance
+            WHERE current_stock < min_stock
+            """
+        )
+        
+        if not low_stock_products:
+            return jsonify({'suggestions': [], 'total_suppliers': 0, 'total_items': 0}), 200
+            
+        # 2. Với mỗi sản phẩm bị thiếu, tìm nhà cung cấp tối ưu nhất (giá hợp đồng rẻ nhất)
+        from app.model.supplier_product_price import SupplierProductPrice
+        from app.model.supplier import Supplier
+        
+        suggestions_by_supplier = {}
+        
+        for p in low_stock_products:
+            pid = p['product_id']
+            shortage = p['min_stock'] - p['current_stock']
+            # Số lượng gợi ý bổ hàng tối ưu
+            suggested_qty = max(shortage, p['min_stock'] * 2 - p['current_stock'])
+            
+            # Tìm tất cả liên kết nhà cung cấp cho sản phẩm này
+            prices = SupplierProductPrice.query.filter_by(product_id=pid).all()
+            
+            best_supplier = None
+            best_price = 0.0
+            best_lead_time = 2
+            
+            if prices:
+                # Sắp xếp chọn nhà cung cấp có contract_price nhỏ nhất
+                prices.sort(key=lambda sp: sp.contract_price)
+                best_link = prices[0]
+                best_supplier = best_link.supplier
+                best_price = float(best_link.contract_price)
+                best_lead_time = best_link.lead_time_days
+            else:
+                # Fallback: lấy nhà cung cấp đầu tiên liên kết
+                from app.model.product import Product
+                prod = db.session.get(Product, pid)
+                if prod and prod.suppliers:
+                    # Lấy nhà cung cấp đầu tiên được liên kết trong quan hệ
+                    best_supplier = prod.suppliers[0]
+                    best_price = float(prod.unit_price) if prod.unit_price else 0.0
+                else:
+                    # Nếu chưa liên kết nhà cung cấp nào, lấy nhà cung cấp hoạt động bất kỳ làm gợi ý
+                    first_active_supplier = Supplier.query.filter_by(is_active=True).first()
+                    if first_active_supplier:
+                        best_supplier = first_active_supplier
+                        best_price = float(prod.unit_price) if prod and prod.unit_price else 0.0
+            
+            if not best_supplier:
+                continue
+                
+            supplier_id = best_supplier.id
+            if supplier_id not in suggestions_by_supplier:
+                suggestions_by_supplier[supplier_id] = {
+                    'supplier_id': supplier_id,
+                    'supplier_name': best_supplier.name,
+                    'supplier_phone': best_supplier.phone,
+                    'items': [],
+                    'total_estimated_amount': 0.0,
+                    'max_lead_time_days': 0
+                }
+                
+            est_amount = suggested_qty * best_price
+            suggestions_by_supplier[supplier_id]['items'].append({
+                'product_id': pid,
+                'product_code': p['product_code'],
+                'product_name': p['product_name'],
+                'unit': p['unit'],
+                'category': p['category'],
+                'current_stock': p['current_stock'],
+                'min_stock': p['min_stock'],
+                'shortage': shortage,
+                'suggested_qty': suggested_qty,
+                'unit_price': best_price,
+                'estimated_amount': est_amount,
+                'lead_time_days': best_lead_time
+            })
+            
+            suggestions_by_supplier[supplier_id]['total_estimated_amount'] += est_amount
+            suggestions_by_supplier[supplier_id]['max_lead_time_days'] = max(
+                suggestions_by_supplier[supplier_id]['max_lead_time_days'],
+                best_lead_time
+            )
+            
+        result = list(suggestions_by_supplier.values())
+        total_items = sum(len(s['items']) for s in result)
+        
+        return jsonify({
+            'suggestions': result,
+            'total_suppliers': len(result),
+            'total_items': total_items
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': f'Lỗi hệ thống: {str(e)}'}), 500
+

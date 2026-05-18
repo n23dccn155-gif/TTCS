@@ -36,7 +36,7 @@ def create_app(config_class=Config):
     with app.app_context():
         # Import tất cả model để SQLAlchemy nhận diện đủ 9 bảng
         from app.model import (  # noqa: F401
-            user, product, supplier,
+            user, product, supplier, supplier_product_price,
             import_receipt, import_detail,
             export_receipt, export_detail,
             location, stock_adjustment

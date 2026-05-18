@@ -16,6 +16,7 @@ import ExportCreatePage from '../pages/exports/ExportCreatePage'
 import ExportDetailPage from '../pages/exports/ExportDetailPage'
 import InventoryPage from '../pages/inventory/InventoryPage'
 import AlertsPage from '../pages/alert/AlertsPage'
+import ReplenishmentPage from '../pages/replenishment/ReplenishmentPage'
 import NotFoundPage from '../pages/errors/NotFoundPage'
 import ForbiddenPage from '../pages/errors/ForbiddenPage'
 
@@ -49,6 +50,7 @@ export const router = createBrowserRouter([
       { path: 'exports/:id', element: <ExportDetailPage /> },
       { path: 'inventory', element: <InventoryPage /> },
       { path: 'alerts', element: <AlertsPage /> },
+      { path: 'replenishments', element: <ReplenishmentPage /> },
       { path: '403', element: <ForbiddenPage /> },
     ],
   },

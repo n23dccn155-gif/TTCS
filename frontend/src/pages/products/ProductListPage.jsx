@@ -29,8 +29,7 @@ const ProductListPage = () => {
         'Danh mục': item.category,
         'Đơn vị': item.unit,
         'Đơn giá': item.unit_price,
-        'Min Stock': item.min_stock,
-        'Max Stock': item.max_stock,
+        'Ngưỡng tối thiểu': item.min_stock,
         'Tồn thực tế': item.current_stock || 0
       }))
       exportToExcel(formattedData, 'Danh_Sach_San_Pham')
@@ -59,7 +58,6 @@ const ProductListPage = () => {
     category: '',
     unit: '',
     min_stock: 0,
-    max_stock: 10000,
     unit_price: '',
     description: '',
     location_id: '',
@@ -150,7 +148,6 @@ const ProductListPage = () => {
       category: product.category || '',
       unit: product.unit || '',
       min_stock: product.min_stock || 0,
-      max_stock: product.max_stock || 10000,
       unit_price: product.unit_price || '',
       description: product.description || '',
       location_id: product.location_id || '',
@@ -166,7 +163,6 @@ const ProductListPage = () => {
       category: '',
       unit: '',
       min_stock: 0,
-      max_stock: 10000,
       unit_price: '',
       description: '',
       location_id: '',
@@ -203,14 +199,13 @@ const ProductListPage = () => {
       title: 'Đơn giá',
       render: (row) => <span className="font-medium text-slate-900">{formatCurrency(row.unit_price)}</span>
     },
-    { key: 'min_stock', title: 'Min/Max', render: (row) => `${row.min_stock} / ${row.max_stock || 10000}` },
+    { key: 'min_stock', title: 'Ngưỡng tối thiểu' },
     {
       key: 'current_stock',
       title: 'Tồn thực tế',
       render: (row) => {
         const stock = row.current_stock || 0
         const min = row.min_stock || 0
-        const max = row.max_stock || 10000
         if (stock === 0) {
           return (
             <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">
@@ -221,12 +216,6 @@ const ProductListPage = () => {
           return (
             <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
               Tồn kho thấp ({stock})
-            </span>
-          )
-        } else if (stock > max) {
-          return (
-            <span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-700">
-              Vượt tối đa ({stock})
             </span>
           )
         } else {
@@ -571,29 +560,16 @@ const ProductListPage = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700">Ngưỡng tối thiểu <span className="text-red-500">*</span></label>
-                  <input
-                    type="number"
-                    required
-                    placeholder="Ví dụ: 10"
-                    className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
-                    value={formData.min_stock}
-                    onChange={(e) => setFormData({...formData, min_stock: parseInt(e.target.value) || 0})}
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700">Ngưỡng tối đa <span className="text-red-500">*</span></label>
-                  <input
-                    type="number"
-                    required
-                    placeholder="Ví dụ: 10000"
-                    className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
-                    value={formData.max_stock}
-                    onChange={(e) => setFormData({...formData, max_stock: parseInt(e.target.value) || 0})}
-                  />
-                </div>
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-slate-700">Ngưỡng tối thiểu <span className="text-red-500">*</span></label>
+                <input
+                  type="number"
+                  required
+                  placeholder="Ví dụ: 10"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                  value={formData.min_stock}
+                  onChange={(e) => setFormData({...formData, min_stock: parseInt(e.target.value) || 0})}
+                />
               </div>
 
               <div>
@@ -748,29 +724,16 @@ const ProductListPage = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700">Ngưỡng tối thiểu <span className="text-red-500">*</span></label>
-                  <input
-                    type="number"
-                    required
-                    placeholder="Ví dụ: 10"
-                    className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
-                    value={formData.min_stock}
-                    onChange={(e) => setFormData({...formData, min_stock: parseInt(e.target.value) || 0})}
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700">Ngưỡng tối đa <span className="text-red-500">*</span></label>
-                  <input
-                    type="number"
-                    required
-                    placeholder="Ví dụ: 10000"
-                    className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
-                    value={formData.max_stock}
-                    onChange={(e) => setFormData({...formData, max_stock: parseInt(e.target.value) || 0})}
-                  />
-                </div>
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-slate-700">Ngưỡng tối thiểu <span className="text-red-500">*</span></label>
+                <input
+                  type="number"
+                  required
+                  placeholder="Ví dụ: 10"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                  value={formData.min_stock}
+                  onChange={(e) => setFormData({...formData, min_stock: parseInt(e.target.value) || 0})}
+                />
               </div>
 
               <div>

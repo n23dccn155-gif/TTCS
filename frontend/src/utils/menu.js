@@ -7,6 +7,7 @@ import {
   ClipboardMinus,
   Warehouse,
   Bell,
+  Lightbulb,
 } from 'lucide-react'
 
 export const menuItems = [
@@ -18,4 +19,5 @@ export const menuItems = [
   { label: 'Phiếu xuất', path: '/exports', icon: ClipboardMinus },
   { label: 'Tồn kho', path: '/inventory', icon: Warehouse },
   { label: 'Cảnh báo', path: '/alerts', icon: Bell, adminOnly: true },
+  { label: 'Đề xuất bổ hàng', path: '/replenishments', icon: Lightbulb, adminOnly: true },
 ]

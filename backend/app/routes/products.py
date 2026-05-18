@@ -10,19 +10,46 @@ from sqlalchemy import text
 bp = Blueprint('products', __name__)
 
 
-def _sync_suppliers(product, supplier_ids):
-    """Helper: đồng bộ danh sách nhà cung cấp cho sản phẩm."""
-    if supplier_ids is None:
+def _sync_suppliers(product, supplier_ids_or_objects):
+    """Helper: đồng bộ danh sách nhà cung cấp và tạo bảng giá cho sản phẩm."""
+    if supplier_ids_or_objects is None:
         return
-    # Chuyển về list int
-    ids = []
-    for sid in supplier_ids:
-        try:
-            ids.append(int(sid))
-        except (ValueError, TypeError):
-            pass
-    suppliers = Supplier.query.filter(Supplier.id.in_(ids), Supplier.is_active == True).all() if ids else []
-    product.suppliers = suppliers
+    from app.model.supplier_product_price import SupplierProductPrice
+    
+    # Xóa các liên kết bảng giá cũ của sản phẩm này
+    SupplierProductPrice.query.filter_by(product_id=product.id).delete()
+    
+    for item in supplier_ids_or_objects:
+        if isinstance(item, dict):
+            sid = item.get('supplier_id') or item.get('supplierId')
+            price = item.get('contract_price') or item.get('contractPrice')
+            try:
+                price = float(price)
+            except (ValueError, TypeError):
+                price = float(product.unit_price or 0) * 0.85
+            
+            lead_time = item.get('lead_time_days') or item.get('leadTimeDays') or 2
+            try:
+                lead_time = int(lead_time)
+            except (ValueError, TypeError):
+                lead_time = 2
+        else:
+            try:
+                sid = int(item)
+                price = float(product.unit_price or 0) * 0.85
+                lead_time = 2
+            except (ValueError, TypeError):
+                continue
+                
+        supplier = Supplier.query.get(sid)
+        if supplier and supplier.is_active:
+            sp = SupplierProductPrice(
+                supplier_id=supplier.id,
+                product_id=product.id,
+                contract_price=price,
+                lead_time_days=lead_time
+            )
+            db.session.add(sp)
 
 
 @bp.route('/check-duplicate', methods=['GET'])
@@ -95,7 +122,6 @@ def get_all():
         current_stock = stock_map.get(p.id, 0)
         d['current_stock'] = current_stock
         d['is_low_stock'] = current_stock < p.min_stock
-        d['is_over_stock'] = current_stock > p.max_stock
         result.append(d)
 
     return jsonify(result), 200
@@ -146,7 +172,6 @@ def create():
         unit=data.get('unit'),
         description=data.get('description'),
         min_stock=int(data.get('min_stock', 0)),
-        max_stock=int(data.get('max_stock', 10000)),
         unit_price=unit_price,
         location_id=location_id,
         is_active=True,
@@ -187,7 +212,6 @@ def update(id):
     product.unit = data.get('unit', product.unit)
     product.description = data.get('description', product.description)
     product.min_stock = int(data.get('min_stock', product.min_stock))
-    product.max_stock = int(data.get('max_stock', product.max_stock))
     product.unit_price = unit_price
     product.location_id = location_id
 
