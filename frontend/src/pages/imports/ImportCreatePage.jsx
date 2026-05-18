@@ -5,7 +5,8 @@ import supplierService from '../../services/supplierService'
 import locationService from '../../services/locationService'
 
 const ImportCreatePage = () => {
-  const [productOptions, setProductOptions] = useState([])
+  const [allProducts, setAllProducts] = useState([])        // toàn bộ sản phẩm
+  const [productOptions, setProductOptions] = useState([])  // sản phẩm đã lọc theo NCC
   const [supplierOptions, setSupplierOptions] = useState([])
   const [locationOptions, setLocationOptions] = useState([])
   
@@ -21,7 +22,6 @@ const ImportCreatePage = () => {
   ])
 
   useEffect(() => {
-    // Fetch danh sách sản phẩm, nhà cung cấp và vị trí kệ từ DB
     const fetchOptions = async () => {
       try {
         const [prodRes, supRes, locRes] = await Promise.all([
@@ -29,7 +29,8 @@ const ImportCreatePage = () => {
           supplierService.getAll(),
           locationService.getAvailable()
         ])
-        setProductOptions(prodRes.data)
+        setAllProducts(prodRes.data)
+        setProductOptions(prodRes.data)  // mặc định hiện tất cả
         setSupplierOptions(supRes.data)
         setLocationOptions(locRes.data)
       } catch (error) {
@@ -40,7 +41,21 @@ const ImportCreatePage = () => {
   }, [])
 
   const handleFormChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
+
+    // Khi chọn nhà cung cấp, lọc danh sách sản phẩm
+    if (name === 'supplierId') {
+      if (value) {
+        const sid = parseInt(value)
+        const filtered = allProducts.filter(p => p.supplier_ids && p.supplier_ids.includes(sid))
+        setProductOptions(filtered.length > 0 ? filtered : allProducts)
+      } else {
+        setProductOptions(allProducts)
+      }
+      // Reset item sản phẩm khi đổi NCC
+      setItems([{ productId: '', productName: '', quantity: '', price: '', totalAmount: 0, expiryDate: '', locationId: '', isNewProduct: true }])
+    }
   }
 
   const handleItemChange = (index, field, value) => {

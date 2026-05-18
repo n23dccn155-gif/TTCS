@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import supplierService from '../../services/supplierService'
+import productService from '../../services/productService'
 import PageHeader from '../../components/common/PageHeader'
 import DataTable from '../../components/common/DataTable'
 import EmptyState from '../../components/common/EmptyState'
 import { useAuth } from '../../contexts/AuthContext'
-import { X, Edit2, Trash2, ShieldAlert } from 'lucide-react'
+import { X, Edit2, Trash2, ShieldAlert, ChevronDown, ChevronUp, Package } from 'lucide-react'
 
 const SupplierListPage = () => {
   const { user } = useAuth()
@@ -13,6 +14,8 @@ const SupplierListPage = () => {
   const [suppliers, setSuppliers] = useState([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(false)
+  const [expandedSupplierId, setExpandedSupplierId] = useState(null)
+  const [productsBySupplier, setProductsBySupplier] = useState({})
 
   // Modals state
   const [isCreateOpen, setIsCreateOpen] = useState(false)
@@ -38,6 +41,22 @@ const SupplierListPage = () => {
       console.error('Failed to fetch suppliers', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const toggleSupplierProducts = async (supplierId) => {
+    if (expandedSupplierId === supplierId) {
+      setExpandedSupplierId(null)
+      return
+    }
+    setExpandedSupplierId(supplierId)
+    if (!productsBySupplier[supplierId]) {
+      try {
+        const res = await productService.getBySupplier(supplierId)
+        setProductsBySupplier(prev => ({ ...prev, [supplierId]: res.data }))
+      } catch {
+        setProductsBySupplier(prev => ({ ...prev, [supplierId]: [] }))
+      }
     }
   }
 
@@ -132,6 +151,20 @@ const SupplierListPage = () => {
       render: (row) => row.email || <span className="text-slate-400 italic">Chưa cập nhật</span>
     },
     { key: 'address', title: 'Địa chỉ' },
+    {
+      key: 'expand',
+      title: 'Sản phẩm',
+      render: (row) => (
+        <button
+          onClick={() => toggleSupplierProducts(row.id)}
+          className="flex items-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600 hover:bg-indigo-100 transition"
+        >
+          <Package className="h-3.5 w-3.5" />
+          Chi tiết
+          {expandedSupplierId === row.id ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+        </button>
+      )
+    },
   ]
 
   // Add Action column only if current user is an Admin
@@ -216,8 +249,110 @@ const SupplierListPage = () => {
         />
       </div>
 
-      <div className="rounded-2xl bg-white shadow-sm border border-slate-200">
+      <div className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
         <DataTable columns={columns} data={filteredSuppliers} empty={emptyState} />
+
+        {/* Expanded product panel */}
+        {expandedSupplierId && (() => {
+          const sup = suppliers.find(s => s.id === expandedSupplierId)
+          const prods = productsBySupplier[expandedSupplierId]
+          return (
+            // <div className="border-t border-indigo-100 bg-indigo-50 px-6 py-4">
+            //   <div className="flex items-center gap-2 mb-3">
+            //     <Package className="h-4 w-4 text-indigo-600" />
+            //     <h4 className="font-bold text-indigo-800 text-sm">
+            //       Sản phẩm của: {sup?.name}
+            //     </h4>
+            //     <span className="ml-auto text-xs text-indigo-500">{prods?.length || 0} sản phẩm</span>
+            //   </div>
+            //   {!prods ? (
+            //     <p className="text-xs text-slate-500">Đang tải...</p>
+            //   ) : prods.length === 0 ? (
+            //     <p className="text-xs text-slate-400 italic">Nhà cung cấp này chưa có sản phẩm nào được liên kết.</p>
+            //   ) : (
+            //     <div className="flex flex-wrap gap-2">
+            //       {prods.map(p => (
+            //         <span key={p.id} className="flex items-center gap-1.5 rounded-xl border border-indigo-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700">
+            //           <span className="text-indigo-400 font-mono">{p.product_code}</span>
+            //           {p.name}
+            //           {p.unit && <span className="text-slate-400">/ {p.unit}</span>}
+            //         </span>
+            //       ))}
+            //     </div>
+            //   )}
+            // </div>
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+              onClick={() => setExpandedSupplierId(null)}
+            >
+              <div
+                className="w-full max-w-4xl transform rounded-2xl bg-white shadow-2xl transition-all"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+                  <div className="flex items-center gap-2">
+                    <Package className="h-5 w-5 text-indigo-600" />
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-800">Sản phẩm của nhà cung cấp</h3>
+                      <p className="text-sm text-slate-500">{sup?.name}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setExpandedSupplierId(null)}
+                    className="rounded-full p-1 text-gray-400 hover:bg-gray-100 transition"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <div className="max-h-[70vh] overflow-y-auto p-6">
+                  {!prods ? (
+                    <p className="text-sm text-slate-500">Đang tải...</p>
+                  ) : prods.length === 0 ? (
+                    <p className="text-sm text-slate-400 italic">
+                      Nhà cung cấp này chưa có sản phẩm nào được liên kết.
+                    </p>
+                  ) : (
+                    <>
+                      <div className="mb-4 flex items-center justify-between">
+                        <span className="text-sm font-semibold text-indigo-700">
+                          Danh sách sản phẩm đang liên kết
+                        </span>
+                        <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600">
+                          {prods.length} sản phẩm
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                        {prods.map((p) => (
+                          <div
+                            key={p.id}
+                            className="rounded-xl border border-indigo-100 bg-slate-50 px-4 py-3"
+                          >
+                            <div className="mb-2 flex items-center gap-2">
+                              <span className="rounded-lg bg-indigo-100 px-2 py-1 text-xs font-mono font-semibold text-indigo-600">
+                                {p.product_code || 'SP'}
+                              </span>
+                              {p.unit && (
+                                <span className="text-xs text-slate-400">{p.unit}</span>
+                              )}
+                            </div>
+                            <p className="text-sm font-semibold text-slate-800">
+                              {p.name || p.product_name}
+                            </p>
+                            {p.category && (
+                              <p className="mt-1 text-xs text-slate-500">Danh mục: {p.category}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          )
+        })()}
       </div>
 
       {/* CREATE MODAL */}

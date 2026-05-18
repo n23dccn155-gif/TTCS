@@ -46,7 +46,15 @@ const DashboardPage = () => {
       .then(([dashRes, alertRes, impRes, expRes, statsRes]) => {
         setOverview(dashRes.data.overview || {})
         setThisMonth(dashRes.data.this_month || {})
-        setAlerts(alertRes.data || {})
+        const alertData = alertRes.data || {}
+        setAlerts({
+          low_stock_count: alertData.summary?.low_stock_count || 0,
+          expiring_soon_count: alertData.summary?.expiring_soon_count || 0,
+          slow_moving_count: alertData.summary?.slow_moving_count || 0,
+          low_stock: alertData.low_stock || [],
+          expiring_soon: alertData.expiring_soon || [],
+          slow_moving: alertData.slow_moving || [],
+        })
         setRecentImports((impRes.data || []).slice(0, 5))
         setRecentExports((expRes.data || []).slice(0, 5))
         setChartData(statsRes.data || { stats_7days: [], category_stock: [] })

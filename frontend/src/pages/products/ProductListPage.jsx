@@ -4,8 +4,9 @@ import DataTable from '../../components/common/DataTable'
 import EmptyState from '../../components/common/EmptyState'
 import productService from '../../services/productService'
 import locationService from '../../services/locationService'
+import supplierService from '../../services/supplierService'
 import { useAuth } from '../../contexts/AuthContext'
-import { X, Edit2, Trash2, ShieldAlert, ArrowUpDown } from 'lucide-react'
+import { X, Edit2, Trash2, ShieldAlert, ArrowUpDown, Package, LayoutGrid } from 'lucide-react'
 
 const ProductListPage = () => {
   const { user } = useAuth()
@@ -13,9 +14,11 @@ const ProductListPage = () => {
 
   const [products, setProducts] = useState([])
   const [locations, setLocations] = useState([])
+  const [suppliers, setSuppliers] = useState([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(false)
   const [sortBy, setSortBy] = useState('id')
+  const [activeTab, setActiveTab] = useState('products')
 
   // Modals state
   const [isCreateOpen, setIsCreateOpen] = useState(false)
@@ -33,17 +36,20 @@ const ProductListPage = () => {
     unit_price: '',
     description: '',
     location_id: '',
+    supplier_ids: [],
   })
 
   const fetchProducts = async () => {
     setLoading(true)
     try {
-      const [prodRes, locRes] = await Promise.all([
+      const [prodRes, locRes, supRes] = await Promise.all([
         productService.getAll(),
-        locationService.getAll()
+        locationService.getAll(),
+        supplierService.getAll(),
       ])
       setProducts(prodRes.data)
       setLocations(locRes.data)
+      setSuppliers(supRes.data)
     } catch (error) {
       console.error('Failed to fetch data', error)
     } finally {
@@ -81,7 +87,7 @@ const ProductListPage = () => {
       resetForm()
       fetchProducts()
     } catch (error) {
-      alert(error.response?.data?.message || 'Có lỗi xảy ra khi thêm sản phẩm!')
+      alert(error.response?.data?.error || error.response?.data?.message || 'Có lỗi xảy ra khi thêm sản phẩm!')
     }
   }
 
@@ -121,6 +127,7 @@ const ProductListPage = () => {
       unit_price: product.unit_price || '',
       description: product.description || '',
       location_id: product.location_id || '',
+      supplier_ids: product.supplier_ids || [],
     })
     setIsEditOpen(true)
   }
@@ -136,6 +143,7 @@ const ProductListPage = () => {
       unit_price: '',
       description: '',
       location_id: '',
+      supplier_ids: [],
     })
   }
 
@@ -150,6 +158,19 @@ const ProductListPage = () => {
     { key: 'name', title: 'Tên sản phẩm' },
     { key: 'category', title: 'Danh mục' },
     { key: 'unit', title: 'Đơn vị' },
+    { 
+      key: 'supplier_names', 
+      title: 'Nhà cung cấp',
+      render: (row) => (
+        row.supplier_names && row.supplier_names.length > 0
+          ? <div className="flex flex-wrap gap-1">
+              {row.supplier_names.map((n, i) => (
+                <span key={i} className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">{n}</span>
+              ))}
+            </div>
+          : <span className="text-slate-400 italic text-xs">Chưa liên kết</span>
+      )
+    },
     { 
       key: 'unit_price', 
       title: 'Đơn giá',
@@ -292,9 +313,128 @@ const ProductListPage = () => {
         </div>
       </div>
 
-      <div className="rounded-2xl bg-white shadow-sm border border-slate-200">
-        <DataTable columns={columns} data={filteredProducts} empty={emptyState} />
+      {/* Tab switcher */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setActiveTab('products')}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${
+            activeTab === 'products'
+              ? 'bg-cyan-500 text-white shadow-sm'
+              : 'bg-white border border-slate-200 text-slate-600 hover:border-cyan-300'
+          }`}
+        >
+          <Package className="h-4 w-4" />
+          Sản phẩm ({products.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('locations')}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${
+            activeTab === 'locations'
+              ? 'bg-cyan-500 text-white shadow-sm'
+              : 'bg-white border border-slate-200 text-slate-600 hover:border-cyan-300'
+          }`}
+        >
+          <LayoutGrid className="h-4 w-4" />
+          Kệ hàng ({locations.length})
+        </button>
       </div>
+
+      {activeTab === 'products' && (
+        <div className="rounded-2xl bg-white shadow-sm border border-slate-200">
+          <DataTable columns={columns} data={filteredProducts} empty={emptyState} />
+        </div>
+      )}
+
+      {activeTab === 'locations' && (
+        <div className="space-y-4">
+          {/* Summary cards */}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-sm text-slate-500">Tổng số kệ</p>
+              <p className="mt-1 text-3xl font-bold text-slate-800">{locations.length}</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-sm text-slate-500">Tổng sức chứa</p>
+              <p className="mt-1 text-3xl font-bold text-cyan-700">
+                {locations.reduce((s, l) => s + (l.max_capacity || 0), 0).toLocaleString()}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-sm text-slate-500">Còn trống</p>
+              <p className="mt-1 text-3xl font-bold text-emerald-600">
+                {locations.reduce((s, l) => s + (l.available_capacity || 0), 0).toLocaleString()}
+              </p>
+            </div>
+          </div>
+
+          {/* Location cards grid */}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {locations.map((loc) => {
+              const pct = loc.max_capacity > 0
+                ? Math.min(100, Math.round((loc.current_occupied / loc.max_capacity) * 100))
+                : 0
+              const barColor =
+                pct >= 90 ? 'bg-red-500'
+                : pct >= 70 ? 'bg-amber-500'
+                : 'bg-emerald-500'
+              const statusLabel =
+                pct >= 100 ? { text: 'Đầy', cls: 'bg-red-100 text-red-700' }
+                : pct >= 70 ? { text: 'Gần đầy', cls: 'bg-amber-100 text-amber-700' }
+                : { text: 'Còn trống', cls: 'bg-emerald-100 text-emerald-700' }
+
+              return (
+                <div key={loc.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-bold text-slate-800">{loc.name}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{loc.location_code}</p>
+                    </div>
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusLabel.cls}`}>
+                      {statusLabel.text}
+                    </span>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div>
+                    <div className="flex justify-between text-xs text-slate-500 mb-1">
+                      <span>Hàng trên kệ: <strong className="text-slate-700">{loc.current_occupied.toLocaleString()}</strong></span>
+                      <span><strong className="text-slate-700">{pct}%</strong></span>
+                    </div>
+                    <div className="h-2.5 w-full rounded-full bg-slate-100">
+                      <div
+                        className={`h-2.5 rounded-full transition-all ${barColor}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Detail stats */}
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div className="rounded-xl bg-slate-50 p-3">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Sức chứa tối đa</p>
+                      <p className="mt-1 text-lg font-bold text-slate-700">{loc.max_capacity.toLocaleString()}</p>
+                    </div>
+                    <div className="rounded-xl bg-emerald-50 p-3">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-500">Còn trống</p>
+                      <p className="mt-1 text-lg font-bold text-emerald-700">{(loc.available_capacity || 0).toLocaleString()}</p>
+                    </div>
+                  </div>
+
+                  {loc.description && (
+                    <p className="text-xs text-slate-400 italic border-t border-slate-100 pt-2">{loc.description}</p>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          {locations.length === 0 && (
+            <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-slate-400">
+              Chưa có kệ hàng nào được tạo.
+            </div>
+          )}
+        </div>
+      )}
 
       {/* CREATE MODAL */}
       {isCreateOpen && (
@@ -428,6 +568,29 @@ const ProductListPage = () => {
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
                 />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-slate-700">Nhà cung cấp</label>
+                <div className="max-h-32 overflow-y-auto rounded-xl border border-slate-300 p-2 space-y-1">
+                  {suppliers.filter(s => s.is_active).map(sup => (
+                    <label key={sup.id} className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-slate-50 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="accent-cyan-500"
+                        checked={formData.supplier_ids.includes(sup.id)}
+                        onChange={(e) => {
+                          const ids = e.target.checked
+                            ? [...formData.supplier_ids, sup.id]
+                            : formData.supplier_ids.filter(id => id !== sup.id)
+                          setFormData({...formData, supplier_ids: ids})
+                        }}
+                      />
+                      <span className="text-sm text-slate-700">{sup.name}</span>
+                    </label>
+                  ))}
+                  {suppliers.length === 0 && <p className="text-xs text-slate-400 p-1">Chưa có nhà cung cấp nào</p>}
+                </div>
               </div>
 
               <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
@@ -574,14 +737,26 @@ const ProductListPage = () => {
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-semibold text-slate-700">Mô tả sản phẩm</label>
-                <textarea
-                  placeholder="Mô tả thêm về sản phẩm..."
-                  rows="3"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                />
+                <label className="mb-1 block text-sm font-semibold text-slate-700">Nhà cung cấp</label>
+                <div className="max-h-32 overflow-y-auto rounded-xl border border-slate-300 p-2 space-y-1">
+                  {suppliers.filter(s => s.is_active).map(sup => (
+                    <label key={sup.id} className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-slate-50 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="accent-cyan-500"
+                        checked={formData.supplier_ids.includes(sup.id)}
+                        onChange={(e) => {
+                          const ids = e.target.checked
+                            ? [...formData.supplier_ids, sup.id]
+                            : formData.supplier_ids.filter(id => id !== sup.id)
+                          setFormData({...formData, supplier_ids: ids})
+                        }}
+                      />
+                      <span className="text-sm text-slate-700">{sup.name}</span>
+                    </label>
+                  ))}
+                  {suppliers.length === 0 && <p className="text-xs text-slate-400 p-1">Chưa có nhà cung cấp nào</p>}
+                </div>
               </div>
 
               <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">

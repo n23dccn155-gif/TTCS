@@ -13,7 +13,7 @@ const ExportCreatePage = () => {
     note: '',
   })
 
-  const [items, setItems] = useState([{ productId: '', productName: '', quantity: '', price: '', totalAmount: 0 }])
+  const [items, setItems] = useState([{ productId: '', productName: '', quantity: '', sellingPrice: '', totalAmount: 0 }])
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -54,9 +54,9 @@ const ExportCreatePage = () => {
     }
 
     // Tính thành tiền
-    if (field === 'quantity' || field === 'price') {
+    if (field === 'quantity' || field === 'sellingPrice') {
       const qty = parseFloat(updated[index].quantity) || 0
-      const prc = parseFloat(updated[index].price) || 0
+      const prc = parseFloat(updated[index].sellingPrice) || 0
       updated[index].totalAmount = qty * prc
     }
 
@@ -64,7 +64,7 @@ const ExportCreatePage = () => {
   }
 
   const addRow = () => {
-    setItems([...items, { productId: '', productName: '', quantity: '', price: '', totalAmount: 0 }])
+    setItems([...items, { productId: '', productName: '', quantity: '', sellingPrice: '', totalAmount: 0 }])
   }
 
   const removeRow = (index) => {
@@ -77,7 +77,7 @@ const ExportCreatePage = () => {
       await exportService.create({ ...formData, items })
       alert('Tạo phiếu xuất thành công!')
       setFormData({ receiptCode: '', exportDate: '', customerName: '', deliveryAddress: '', note: '' })
-      setItems([{ productId: '', productName: '', quantity: '', price: '', totalAmount: 0 }])
+      setItems([{ productId: '', productName: '', quantity: '', sellingPrice: '', totalAmount: 0 }])
     } catch (error) {
       alert(error.response?.data?.message || 'Lỗi khi tạo phiếu xuất')
     }
@@ -197,8 +197,8 @@ const ExportCreatePage = () => {
                   min="0"
                   step="1000"
                   placeholder="Đơn giá xuất"
-                  value={item.price}
-                  onChange={(e) => handleItemChange(index, 'price', e.target.value)}
+                  value={item.sellingPrice}
+                  onChange={(e) => handleItemChange(index, 'sellingPrice', e.target.value)}
                   className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-cyan-500"
                 />
 
