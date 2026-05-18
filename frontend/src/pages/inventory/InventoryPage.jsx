@@ -3,6 +3,8 @@ import axiosClient from '../../services/axiosClient'
 import PageHeader from '../../components/common/PageHeader'
 import DataTable from '../../components/common/DataTable'
 import EmptyState from '../../components/common/EmptyState'
+import { exportToExcel } from '../../utils/exportUtils'
+import { FileSpreadsheet } from 'lucide-react'
 
 const InventoryPage = () => {
   const [inventory, setInventory] = useState([])
@@ -15,6 +17,20 @@ const InventoryPage = () => {
       .catch(() => setInventory([]))
       .finally(() => setLoading(false))
   }, [])
+
+  const handleExport = () => {
+    const formattedData = inventory.map(item => ({
+      'Mã SP': item.product_code,
+      'Tên sản phẩm': item.product_name,
+      'Danh mục': item.category,
+      'Đơn vị': item.unit,
+      'Tổng nhập': item.total_imported,
+      'Tổng xuất': item.total_exported,
+      'Tồn hiện tại': item.current_stock,
+      'Ngưỡng tối thiểu': item.min_stock
+    }))
+    exportToExcel(formattedData, 'Bao_Cao_Ton_Kho')
+  }
 
   const columns = [
     { key: 'product_code', title: 'Mã SP' },
@@ -47,11 +63,23 @@ const InventoryPage = () => {
     />
   )
 
+  const actionButton = (
+    <button
+      onClick={handleExport}
+      disabled={inventory.length === 0}
+      className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-200 transition hover:bg-emerald-700 disabled:opacity-50 disabled:shadow-none"
+    >
+      <FileSpreadsheet className="h-4 w-4" />
+      Xuất Excel
+    </button>
+  )
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Tồn kho hiện tại"
         description="Hiển thị số lượng tồn của từng sản phẩm"
+        action={actionButton}
       />
       {loading ? (
         <div className="flex h-48 items-center justify-center rounded-2xl border border-slate-200 bg-white">
@@ -65,3 +93,4 @@ const InventoryPage = () => {
 }
 
 export default InventoryPage
+
